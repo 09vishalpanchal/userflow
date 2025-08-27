@@ -3,6 +3,9 @@ import { useLocation } from "wouter";
 import { Navbar } from "@/components/navbar";
 import { HeroSection } from "@/components/hero-section";
 import { ServiceCategories } from "@/components/service-categories";
+import { NewNoteworthy } from "@/components/new-noteworthy";
+import { FeaturedServices } from "@/components/featured-services";
+import { CategorySpecificSections } from "@/components/category-specific-sections";
 import { HowItWorks } from "@/components/how-it-works";
 import { BrowseJobsPreview } from "@/components/browse-jobs-preview";
 import { FeaturedProviders } from "@/components/featured-providers";
@@ -50,7 +53,9 @@ export default function Home() {
           onProviderSignup={handleProviderSignup}
         />
         <ServiceCategories />
-        <HowItWorks />
+        <NewNoteworthy />
+        <FeaturedServices />
+        <CategorySpecificSections />
         <BrowseJobsPreview />
         <FeaturedProviders />
         <Testimonials />

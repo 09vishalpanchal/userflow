@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Search, Briefcase } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Search, MapPin, Star, Users } from "lucide-react";
 
 interface HeroSectionProps {
   onCustomerSignup: () => void;
@@ -7,53 +9,72 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ onCustomerSignup, onProviderSignup }: HeroSectionProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [location, setLocation] = useState("Bangalore");
+
   return (
-    <section className="hero-gradient text-white py-20" data-testid="hero-section">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="bg-white py-12 md:py-16" data-testid="hero-section">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6" data-testid="text-hero-title">
-            Connect with Local 
-            <span className="block">Service Providers</span>
+          {/* Main Heading */}
+          <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6" data-testid="text-hero-title">
+            Home services at your doorstep
           </h1>
-          <p className="text-xl md:text-2xl mb-8 text-white/90 max-w-3xl mx-auto" data-testid="text-hero-description">
-            Find trusted professionals for your home and business needs, or grow your service business by connecting with local customers.
-          </p>
           
-          {/* Dual CTA Section */}
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mt-12" data-testid="cta-section">
-            {/* Customer CTA */}
-            <div className="bg-white/10 backdrop-blur-md rounded-xl p-8 border border-white/20" data-testid="card-customer-cta">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Search className="text-2xl" />
-                </div>
-                <h3 className="text-2xl font-semibold mb-4" data-testid="text-customer-title">Looking for Services?</h3>
-                <p className="text-white/80 mb-6" data-testid="text-customer-description">Find verified professionals for cleaning, repairs, beauty, and more.</p>
-                <Button 
-                  className="w-full bg-white text-primary hover:bg-gray-100 font-semibold py-3 px-6 rounded-lg transition-colors" 
-                  onClick={onCustomerSignup}
-                  data-testid="button-find-services"
-                >
-                  Find Services
-                </Button>
+          {/* Search Section */}
+          <div className="max-w-lg mx-auto mb-8">
+            <p className="text-lg text-gray-600 mb-6">What are you looking for?</p>
+            
+            <div className="flex gap-2">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Input 
+                  type="text"
+                  placeholder="Search for services..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 py-3 rounded-lg border-2 border-gray-200 focus:border-primary"
+                  data-testid="input-search"
+                />
+              </div>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Input 
+                  type="text"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="pl-10 py-3 w-32 rounded-lg border-2 border-gray-200 focus:border-primary"
+                  data-testid="input-location"
+                />
+              </div>
+              <Button 
+                className="px-6 py-3 bg-primary hover:bg-primary/90 rounded-lg"
+                data-testid="button-search"
+              >
+                Search
+              </Button>
+            </div>
+          </div>
+
+          {/* Statistics */}
+          <div className="flex justify-center items-center gap-8 text-center">
+            <div className="flex items-center gap-2" data-testid="rating-stat">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <Star className="w-6 h-6 text-green-600 fill-current" />
+              </div>
+              <div className="text-left">
+                <div className="text-2xl font-bold text-gray-900">4.8</div>
+                <div className="text-sm text-gray-600">Service Rating*</div>
               </div>
             </div>
             
-            {/* Provider CTA */}
-            <div className="bg-white/10 backdrop-blur-md rounded-xl p-8 border border-white/20" data-testid="card-provider-cta">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Briefcase className="text-2xl" />
-                </div>
-                <h3 className="text-2xl font-semibold mb-4" data-testid="text-provider-title">Offer Services?</h3>
-                <p className="text-white/80 mb-6" data-testid="text-provider-description">Join our platform and connect with customers in your area.</p>
-                <Button 
-                  className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold py-3 px-6 rounded-lg transition-colors"
-                  onClick={onProviderSignup}
-                  data-testid="button-start-earning"
-                >
-                  Start Earning
-                </Button>
+            <div className="flex items-center gap-2" data-testid="customers-stat">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <Users className="w-6 h-6 text-blue-600" />
+              </div>
+              <div className="text-left">
+                <div className="text-2xl font-bold text-gray-900">10K+</div>
+                <div className="text-sm text-gray-600">Customers Globally*</div>
               </div>
             </div>
           </div>

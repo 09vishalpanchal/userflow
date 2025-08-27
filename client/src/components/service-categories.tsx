@@ -1,50 +1,76 @@
-import { Button } from "@/components/ui/button";
-import { Home, Wrench, Scissors, Car, Laptop, Paintbrush } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { 
+  Home, 
+  Wrench, 
+  Scissors, 
+  Car, 
+  Laptop, 
+  Paintbrush, 
+  Sparkles,
+  Zap,
+  Settings,
+  Users,
+  Car as CarIcon,
+  BookOpen,
+  Heart,
+  Camera,
+  UtensilsCrossed,
+  PawPrint
+} from "lucide-react";
 
-const categories = [
-  { icon: Home, name: "Home Cleaning", id: "home-cleaning" },
-  { icon: Wrench, name: "Repairs", id: "repairs" },
-  { icon: Scissors, name: "Beauty & Spa", id: "beauty-spa" },
-  { icon: Car, name: "Auto Services", id: "auto-services" },
-  { icon: Laptop, name: "Tech Support", id: "tech-support" },
-  { icon: Paintbrush, name: "Painting", id: "painting" },
-];
+const iconMap: { [key: string]: any } = {
+  "Home Cleaning": Home,
+  "Plumbing": Wrench,
+  "Electrical Work": Zap,
+  "Carpentry": Settings,
+  "Painting": Paintbrush,
+  "HVAC": Settings,
+  "Appliance Repair": Laptop,
+  "Gardening": Sparkles,
+  "Beauty & Spa": Scissors,
+  "Auto Services": Car,
+  "Tech Support": Laptop,
+  "Tutoring": BookOpen,
+  "Pet Care": PawPrint,
+  "Moving Services": Users,
+  "Photography": Camera,
+  "Catering": UtensilsCrossed,
+  "Other": Settings,
+};
 
 export function ServiceCategories() {
-  return (
-    <section id="services" className="py-20 bg-muted/30" data-testid="service-categories-section">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4" data-testid="text-categories-title">Popular Service Categories</h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto" data-testid="text-categories-description">
-            Discover thousands of trusted professionals ready to help with your needs
-          </p>
-        </div>
+  const { data: categoriesData } = useQuery({
+    queryKey: ["/api/categories"],
+    enabled: true,
+  });
 
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6" data-testid="categories-grid">
-          {categories.map((category) => {
-            const IconComponent = category.icon;
+  const categories = (categoriesData as any)?.categories || [];
+
+  return (
+    <section className="py-8 bg-white" data-testid="service-categories-section">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Categories Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4" data-testid="categories-grid">
+          {categories.slice(0, 8).map((category: string) => {
+            const IconComponent = iconMap[category] || Settings;
+            const categoryId = category.toLowerCase().replace(/\s+/g, '-');
+            
             return (
               <div 
-                key={category.id}
-                className="service-category bg-card hover:bg-primary group rounded-xl p-6 text-center cursor-pointer transition-all duration-300 card-hover"
-                data-testid={`category-${category.id}`}
+                key={categoryId}
+                className="flex flex-col items-center p-4 rounded-xl hover:shadow-md transition-shadow cursor-pointer group"
+                data-testid={`category-${categoryId}`}
               >
-                <div className="w-12 h-12 mx-auto mb-4 text-primary group-hover:text-white text-2xl flex items-center justify-center">
-                  <IconComponent size={24} />
+                <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-3 group-hover:bg-primary/10 transition-colors">
+                  <IconComponent className="w-7 h-7 text-gray-600 group-hover:text-primary" />
                 </div>
-                <h3 className="font-semibold text-card-foreground group-hover:text-white" data-testid={`text-${category.id}`}>
-                  {category.name}
-                </h3>
+                <span className="text-sm font-medium text-gray-800 text-center leading-tight">
+                  {category}
+                </span>
               </div>
             );
           })}
-        </div>
-
-        <div className="text-center mt-12">
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-lg font-semibold transition-colors" data-testid="button-view-all-categories">
-            View All Categories
-          </Button>
         </div>
       </div>
     </section>
