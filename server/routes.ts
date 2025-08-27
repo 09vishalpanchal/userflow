@@ -268,7 +268,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Job not found" });
       }
 
-      if (job.unlockCount >= job.maxUnlocks) {
+      if ((job.unlockCount || 0) >= (job.maxUnlocks || 3)) {
         return res.status(400).json({ message: "Maximum unlocks reached for this job" });
       }
 
@@ -285,12 +285,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const unlockPrice = 100; // ₹100 per unlock
-      if (parseFloat(wallet.balance) < unlockPrice) {
+      if (parseFloat(wallet.balance || '0') < unlockPrice) {
         return res.status(400).json({ message: "Insufficient wallet balance" });
       }
 
       // Deduct from wallet
-      const newBalance = (parseFloat(wallet.balance) - unlockPrice).toString();
+      const newBalance = (parseFloat(wallet.balance || '0') - unlockPrice).toString();
       await storage.updateWalletBalance(providerId, newBalance);
 
       // Create transaction record
@@ -356,7 +356,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Wallet not found" });
       }
 
-      const newBalance = (parseFloat(wallet.balance) + amount).toString();
+      const newBalance = (parseFloat(wallet.balance || '0') + amount).toString();
       await storage.updateWalletBalance(req.params.providerId, newBalance);
 
       // Create transaction record
