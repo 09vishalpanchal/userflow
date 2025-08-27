@@ -52,7 +52,8 @@ function Router() {
         <Route path="/auth/register" component={Register} />
         <Route path="/auth/login" component={Login} />
         
-        {/* Profile Completion Routes */}
+        {/* Profile Routes */}
+        <Route path="/profile/select" component={lazy(() => import("@/pages/profile/select"))} />
         <Route path="/profile/customer" component={CustomerProfileCompletion} />
         <Route path="/profile/provider" component={ProviderProfileCompletion} />
         
@@ -83,7 +84,7 @@ function Router() {
         <Route path="/provider/wallet" component={ProviderWallet} />
         
         {/* Admin Routes */}
-        <Route path="/admin/dashboard" component={AdminDashboard} />
+        <Route path="/admin/dashboard" component={lazy(() => import("@/pages/admin/sidebar-dashboard"))} />
         
         {/* Fallback to 404 */}
         <Route component={NotFound} />

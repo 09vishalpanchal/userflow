@@ -59,12 +59,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await storage.markOtpAsUsed(otp.id);
 
-      // Create user (requires admin approval)
+      // Create user - auto-approve customers, providers need admin approval
       const user = await storage.createUser({
         phoneNumber,
         userType,
         isVerified: true,
-        isApproved: false // Requires admin approval
+        isApproved: userType === 'customer' // Auto-approve customers, providers need approval
       });
 
       // Create wallet for providers
@@ -75,8 +75,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      const message = userType === 'customer' 
+        ? "Phone verified successfully. Please complete your profile."
+        : "Phone verified successfully. Your account is pending admin approval.";
+        
       res.json({ 
-        message: "Phone verified successfully. Your account is pending admin approval.",
+        message,
         user: {
           id: user.id,
           phoneNumber: user.phoneNumber,
@@ -105,7 +109,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Account is blocked" });
       }
 
-      if (!user.isApproved) {
+      if (!user.isApproved && user.userType === 'provider') {
         return res.status(403).json({ message: "Account is pending admin approval" });
       }
 
@@ -148,7 +152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      if (!user.isApproved) {
+      if (!user.isApproved && user.userType === 'provider') {
         return res.status(403).json({ message: "Account is pending admin approval" });
       }
 
