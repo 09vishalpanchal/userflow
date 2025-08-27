@@ -74,6 +74,7 @@ function Router() {
         {/* Customer Routes */}
         <Route path="/customer/dashboard" component={CustomerDashboard} />
         <Route path="/customer/profile" component={CustomerDashboardProfile} />
+        <Route path="/customer/post-job" component={PostJob} />
         
         {/* Provider Routes */}
         <Route path="/provider/dashboard" component={ProviderDashboard} />

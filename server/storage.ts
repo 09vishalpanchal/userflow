@@ -451,27 +451,35 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCustomerUnlockedJobs(customerId: string): Promise<any[]> {
-    const unlocked = await db
-      .select({
-        id: jobUnlocks.id,
-        jobId: jobUnlocks.jobId,
-        providerId: jobUnlocks.providerId,
-        providerName: users.name,
-        providerPhone: users.phoneNumber,
-        providerRating: providerProfiles.rating,
-        unlockedAt: jobUnlocks.createdAt,
-      })
-      .from(jobUnlocks)
-      .innerJoin(jobs, eq(jobUnlocks.jobId, jobs.id))
-      .innerJoin(users, eq(jobUnlocks.providerId, users.id))
-      .leftJoin(providerProfiles, eq(users.id, providerProfiles.userId))
-      .where(eq(jobs.customerId, customerId))
-      .orderBy(desc(jobUnlocks.createdAt));
+    try {
+      const unlocked = await db
+        .select({
+          id: jobUnlocks.id,
+          jobId: jobUnlocks.jobId,
+          providerId: jobUnlocks.providerId,
+          providerName: users.name,
+          providerPhone: users.phoneNumber,
+          providerRating: sql<string>`COALESCE(${providerProfiles.rating}, '0')`.as('providerRating'),
+          unlockedAt: jobUnlocks.unlockedAt,
+        })
+        .from(jobUnlocks)
+        .innerJoin(jobs, eq(jobUnlocks.jobId, jobs.id))
+        .innerJoin(users, eq(jobUnlocks.providerId, users.id))
+        .leftJoin(providerProfiles, eq(users.id, providerProfiles.userId))
+        .where(eq(jobs.customerId, customerId))
+        .orderBy(desc(jobUnlocks.unlockedAt));
 
-    return unlocked.map(unlock => ({
-      ...unlock,
-      whatsappLink: `https://wa.me/${unlock.providerPhone?.replace('+', '')}?text=Hi, I saw your profile on ServiceConnect and would like to discuss the job.`
-    }));
+      return unlocked.map(unlock => ({
+        ...unlock,
+        providerRating: parseFloat(unlock.providerRating || '0'),
+        whatsappLink: unlock.providerPhone 
+          ? `https://wa.me/${unlock.providerPhone.replace('+', '')}?text=Hi, I saw your profile on ServiceConnect and would like to discuss the job.`
+          : undefined
+      }));
+    } catch (error) {
+      console.error('Error in getCustomerUnlockedJobs:', error);
+      return [];
+    }
   }
 
   // Admin methods
