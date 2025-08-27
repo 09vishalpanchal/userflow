@@ -51,22 +51,68 @@ export default function UnifiedAuthModal({ isOpen, onClose }: UnifiedAuthModalPr
     },
   });
 
-  const authMutation = useMutation({
-    mutationFn: async (data: PhoneFormData) => {
-      if (isLogin) {
-        // Try login first
-        const response = await apiRequest("POST", "/api/auth/login", data);
-        return { type: 'login', data: await response.json() };
-      } else {
-        // Register new user as customer (they'll choose role during profile completion)
-        const response = await apiRequest("POST", "/api/auth/register", {
-          ...data,
-          userType: 'customer'
-        });
-        return { type: 'register', data: await response.json() };
+  const checkUserMutation = useMutation({
+    mutationFn: async (phoneNumber: string) => {
+      // Check if user exists by attempting login
+      try {
+        const response = await apiRequest("POST", "/api/auth/login", { phoneNumber });
+        return { exists: true, data: await response.json() };
+      } catch (error: any) {
+        if (error.message === "User not found") {
+          return { exists: false };
+        }
+        throw error;
       }
     },
-    onSuccess: (result, variables) => {
+    onSuccess: (result, phoneNumber) => {
+      if (result.exists) {
+        // User exists, proceed with login
+        setIsLogin(true);
+        setPhoneData({ phoneNumber });
+        setStep("otp");
+        toast({
+          title: "OTP Sent",
+          description: "Please check your phone for the verification code.",
+        });
+        
+        // In development, show and auto-fill the OTP code
+        if (result.data.code) {
+          otpForm.setValue("code", result.data.code);
+          toast({
+            title: "Development Mode",
+            description: `Your OTP code is: ${result.data.code} (Auto-filled)`,
+            variant: "default",
+          });
+        }
+      } else {
+        // User doesn't exist, proceed with registration
+        setIsLogin(false);
+        toast({
+          title: "New User Detected",
+          description: "Creating a new account for this phone number.",
+        });
+        // Start registration process
+        registerMutation.mutate({ phoneNumber });
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Please check your phone number.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const registerMutation = useMutation({
+    mutationFn: async (data: PhoneFormData) => {
+      const response = await apiRequest("POST", "/api/auth/register", {
+        ...data,
+        userType: 'customer'
+      });
+      return await response.json();
+    },
+    onSuccess: (data, variables) => {
       setPhoneData(variables);
       setStep("otp");
       toast({
@@ -75,32 +121,21 @@ export default function UnifiedAuthModal({ isOpen, onClose }: UnifiedAuthModalPr
       });
       
       // In development, show and auto-fill the OTP code
-      if (result.data.code) {
-        otpForm.setValue("code", result.data.code);
+      if (data.code) {
+        otpForm.setValue("code", data.code);
         toast({
           title: "Development Mode",
-          description: `Your OTP code is: ${result.data.code} (Auto-filled)`,
+          description: `Your OTP code is: ${data.code} (Auto-filled)`,
           variant: "default",
         });
       }
     },
     onError: (error: any) => {
-      if (error.message === "User not found" && isLogin) {
-        // User doesn't exist, switch to register mode
-        setIsLogin(false);
-        toast({
-          title: "Account Not Found",
-          description: "Creating a new account for this phone number.",
-        });
-        // Retry as registration
-        authMutation.mutate(phoneData!);
-      } else {
-        toast({
-          title: isLogin ? "Login Failed" : "Registration Failed",
-          description: error.message || "Please check your phone number.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Registration Failed",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -191,7 +226,7 @@ export default function UnifiedAuthModal({ isOpen, onClose }: UnifiedAuthModalPr
   });
 
   const onPhoneSubmit = (data: PhoneFormData) => {
-    authMutation.mutate(data);
+    checkUserMutation.mutate(data.phoneNumber);
   };
 
   const onOtpSubmit = (data: OTPFormData) => {
@@ -253,10 +288,10 @@ export default function UnifiedAuthModal({ isOpen, onClose }: UnifiedAuthModalPr
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={authMutation.isPending}
+                  disabled={checkUserMutation.isPending || registerMutation.isPending}
                   data-testid="button-continue"
                 >
-                  {authMutation.isPending ? "Sending OTP..." : "Continue"}
+                  {(checkUserMutation.isPending || registerMutation.isPending) ? "Processing..." : "Continue"}
                 </Button>
               </form>
             </Form>
