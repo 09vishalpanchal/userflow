@@ -192,16 +192,14 @@ export default function Login() {
                     <FormItem>
                       <FormLabel>Verification Code</FormLabel>
                       <FormControl>
-                        <InputOTP maxLength={6} {...field} data-testid="input-otp">
-                          <InputOTPGroup>
-                            <InputOTPSlot index={0} />
-                            <InputOTPSlot index={1} />
-                            <InputOTPSlot index={2} />
-                            <InputOTPSlot index={3} />
-                            <InputOTPSlot index={4} />
-                            <InputOTPSlot index={5} />
-                          </InputOTPGroup>
-                        </InputOTP>
+                        <Input
+                          placeholder="Enter 6-digit OTP"
+                          maxLength={6}
+                          className="text-center text-lg font-mono tracking-widest"
+                          {...field}
+                          data-testid="input-otp"
+                          autoComplete="one-time-code"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
