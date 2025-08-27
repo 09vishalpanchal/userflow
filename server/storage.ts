@@ -103,6 +103,7 @@ export interface IStorage {
   getDashboardStats(): Promise<any>;
   getAllUsers(): Promise<User[]>;
   getAllJobs(): Promise<Job[]>;
+  getAllProviders(): Promise<any[]>;
   getAllWallets(): Promise<Wallet[]>;
   getAllTransactions(): Promise<Transaction[]>;
   getRecentAdminActions(): Promise<any[]>;
@@ -130,6 +131,186 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // Mock data for demo purposes
+  private mockProviders = [
+    {
+      id: 'prov_1',
+      businessName: 'CleanPro Services',
+      businessDetails: 'Professional home cleaning service with 5+ years of experience. We use eco-friendly products and provide deep cleaning solutions.',
+      location: 'Bangalore',
+      serviceCategories: ['Home Cleaning', 'Deep Cleaning'],
+      startingPrice: 800,
+      createdAt: new Date('2024-01-15'),
+      rating: 4.8,
+      reviewCount: 156,
+      availability: 'Available Today',
+      experience: 5
+    },
+    {
+      id: 'prov_2',
+      businessName: 'QuickFix Plumbing',
+      businessDetails: 'Licensed plumber specializing in residential and commercial plumbing repairs, installations, and maintenance.',
+      location: 'Mumbai',
+      serviceCategories: ['Plumbing', 'Pipe Repair'],
+      startingPrice: 500,
+      createdAt: new Date('2024-01-20'),
+      rating: 4.6,
+      reviewCount: 89,
+      availability: 'Available Now',
+      experience: 7
+    },
+    {
+      id: 'prov_3',
+      businessName: 'ElectroMax Solutions',
+      businessDetails: 'Certified electrician providing safe and reliable electrical services for homes and offices.',
+      location: 'Delhi',
+      serviceCategories: ['Electrical Work', 'Wiring'],
+      startingPrice: 600,
+      createdAt: new Date('2024-01-25'),
+      rating: 4.9,
+      reviewCount: 203,
+      availability: 'Available This Week',
+      experience: 8
+    },
+    {
+      id: 'prov_4',
+      businessName: 'CarpentryKing',
+      businessDetails: 'Expert carpenter for furniture repair, custom woodwork, and home renovations.',
+      location: 'Chennai',
+      serviceCategories: ['Carpentry', 'Furniture Repair'],
+      startingPrice: 750,
+      createdAt: new Date('2024-02-01'),
+      rating: 4.7,
+      reviewCount: 124,
+      availability: 'Available Tomorrow',
+      experience: 6
+    },
+    {
+      id: 'prov_5',
+      businessName: 'ColorCraft Painters',
+      businessDetails: 'Professional painting service for interior and exterior walls with premium quality paints.',
+      location: 'Hyderabad',
+      serviceCategories: ['Painting', 'Interior Design'],
+      startingPrice: 400,
+      createdAt: new Date('2024-02-05'),
+      rating: 4.5,
+      reviewCount: 78,
+      availability: 'Available Next Week',
+      experience: 4
+    },
+    {
+      id: 'prov_6',
+      businessName: 'GreenThumb Gardening',
+      businessDetails: 'Landscape design and garden maintenance services for residential properties.',
+      location: 'Pune',
+      serviceCategories: ['Gardening', 'Landscaping'],
+      startingPrice: 300,
+      createdAt: new Date('2024-02-10'),
+      rating: 4.4,
+      reviewCount: 67,
+      availability: 'Flexible',
+      experience: 3
+    }
+  ];
+
+  private mockJobs = [
+    {
+      id: 'job_1',
+      title: 'Deep Cleaning for 3BHK Apartment',
+      description: 'Need professional deep cleaning service for my 3BHK apartment. Kitchen, bathrooms, living areas, and bedrooms need thorough cleaning. Prefer eco-friendly products.',
+      category: 'Home Cleaning',
+      location: 'Bangalore',
+      budget: 2500,
+      urgency: 'asap',
+      createdAt: new Date('2024-02-15'),
+      customerName: 'Priya Sharma',
+      proposals: 8
+    },
+    {
+      id: 'job_2',
+      title: 'Kitchen Sink Pipe Leakage Repair',
+      description: 'My kitchen sink pipe is leaking and needs immediate attention. Water is dripping constantly and I need a professional plumber to fix it.',
+      category: 'Plumbing',
+      location: 'Mumbai',
+      budget: 1200,
+      urgency: 'urgent',
+      createdAt: new Date('2024-02-16'),
+      customerName: 'Amit Patel',
+      proposals: 12
+    },
+    {
+      id: 'job_3',
+      title: 'Electrical Wiring for New Room',
+      description: 'Need electrical wiring done for a newly constructed room. Requires power outlets, lights, and fan connections. Safety is priority.',
+      category: 'Electrical Work',
+      location: 'Delhi',
+      budget: 5000,
+      urgency: 'flexible',
+      createdAt: new Date('2024-02-14'),
+      customerName: 'Rahul Kumar',
+      proposals: 6
+    },
+    {
+      id: 'job_4',
+      title: 'Wooden Cabinet Repair',
+      description: 'My wooden kitchen cabinet door is broken and needs repair. The hinges are damaged and the door won\'t close properly.',
+      category: 'Carpentry',
+      location: 'Chennai',
+      budget: 800,
+      urgency: 'asap',
+      createdAt: new Date('2024-02-17'),
+      customerName: 'Lakshmi Iyer',
+      proposals: 4
+    },
+    {
+      id: 'job_5',
+      title: 'Interior Wall Painting - Living Room',
+      description: 'Looking for professional painters to paint my living room walls. Room size is approximately 200 sq ft. Need color consultation too.',
+      category: 'Painting',
+      location: 'Hyderabad',
+      budget: 3500,
+      urgency: 'flexible',
+      createdAt: new Date('2024-02-13'),
+      customerName: 'Suresh Reddy',
+      proposals: 9
+    },
+    {
+      id: 'job_6',
+      title: 'Garden Landscaping and Maintenance',
+      description: 'Need landscaping services for my front garden. Want to plant new flowers, trim existing plants, and general maintenance.',
+      category: 'Gardening',
+      location: 'Pune',
+      budget: 2000,
+      urgency: 'flexible',
+      createdAt: new Date('2024-02-12'),
+      customerName: 'Neha Joshi',
+      proposals: 3
+    },
+    {
+      id: 'job_7',
+      title: 'AC Repair and Servicing',
+      description: 'My split AC is not cooling properly and making strange noises. Need immediate repair and servicing by certified technician.',
+      category: 'HVAC',
+      location: 'Bangalore',
+      budget: 1500,
+      urgency: 'urgent',
+      createdAt: new Date('2024-02-18'),
+      customerName: 'Vikram Singh',
+      proposals: 15
+    },
+    {
+      id: 'job_8',
+      title: 'Laptop Hardware Issue Fix',
+      description: 'My laptop screen is flickering and sometimes goes blank. Need technical expert to diagnose and fix the hardware issue.',
+      category: 'Tech Support',
+      location: 'Mumbai',
+      budget: 2200,
+      urgency: 'asap',
+      createdAt: new Date('2024-02-19'),
+      customerName: 'Anjali Gupta',
+      proposals: 7
+    }
+  ];
   // User methods
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -248,7 +429,31 @@ export class DatabaseStorage implements IStorage {
 
   async getAllJobs(): Promise<Job[]> {
     const allJobs = await db.select().from(jobs).orderBy(desc(jobs.createdAt));
-    return allJobs;
+    return allJobs.concat(this.mockJobs);
+  }
+
+  async getAllProviders(): Promise<any[]> {
+    // Get real providers from database
+    const realProviders = await db
+      .select({
+        id: providerProfiles.id,
+        businessName: providerProfiles.businessName,
+        businessDetails: providerProfiles.businessDetails,
+        location: providerProfiles.location,
+        serviceCategories: providerProfiles.serviceCategories,
+        startingPrice: providerProfiles.startingPrice,
+        createdAt: providerProfiles.createdAt,
+        rating: providerProfiles.rating,
+        reviewCount: providerProfiles.reviewCount,
+        availability: providerProfiles.availability,
+        experience: providerProfiles.experience
+      })
+      .from(providerProfiles)
+      .where(eq(providerProfiles.status, 'approved'))
+      .orderBy(desc(providerProfiles.createdAt));
+    
+    // Combine with mock data
+    return realProviders.concat(this.mockProviders);
   }
 
   async getJobsNearLocation(latitude: number, longitude: number, radiusKm: number): Promise<Job[]> {

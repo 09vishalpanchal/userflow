@@ -60,6 +60,8 @@ function Router() {
         {/* Public Pages */}
         <Route path="/browse-jobs" component={BrowseJobs} />
         <Route path="/jobs/:city/:category" component={BrowseJobs} />
+        <Route path="/providers/list" component={lazy(() => import("@/pages/providers/list"))} />
+        <Route path="/jobs/list" component={lazy(() => import("@/pages/jobs/list"))} />
         <Route path="/job/:jobId" component={JobDetails} />
         <Route path="/how-it-works" component={HowItWorksPage} />
         <Route path="/post-job" component={PostJob} />

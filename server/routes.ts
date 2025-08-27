@@ -1058,6 +1058,194 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public Providers List with Filtering (SEO-friendly)
+  app.get("/api/providers/list", async (req, res) => {
+    try {
+      const {
+        search = '',
+        location = '',
+        category = [],
+        minRating = 0,
+        minPrice = 0,
+        maxPrice = 10000,
+        availability = 'all',
+        sort = 'rating',
+        page = 1,
+        limit = 12
+      } = req.query;
+
+      const categories = Array.isArray(category) ? category : (category ? [category] : []);
+      const pageNum = parseInt(page as string) || 1;
+      const limitNum = parseInt(limit as string) || 12;
+      const offset = (pageNum - 1) * limitNum;
+
+      // Get all providers (for now, mock data will be used)
+      const allProviders = await storage.getAllProviders();
+      
+      // Apply filters
+      let filteredProviders = allProviders.filter((provider: any) => {
+        // Search filter
+        if (search && !provider.businessName?.toLowerCase().includes(search.toString().toLowerCase()) && 
+            !provider.businessDetails?.toLowerCase().includes(search.toString().toLowerCase())) {
+          return false;
+        }
+        
+        // Location filter
+        if (location && provider.location !== location) {
+          return false;
+        }
+        
+        // Category filter
+        if (categories.length > 0 && (!provider.serviceCategories || 
+            !categories.some((cat: string) => provider.serviceCategories.includes(cat)))) {
+          return false;
+        }
+        
+        // Rating filter
+        if (parseFloat(minRating as string) > 0 && (provider.rating || 0) < parseFloat(minRating as string)) {
+          return false;
+        }
+        
+        // Price filter
+        const startingPrice = provider.startingPrice || 0;
+        if (startingPrice < parseInt(minPrice as string) || startingPrice > parseInt(maxPrice as string)) {
+          return false;
+        }
+        
+        return true;
+      });
+
+      // Apply sorting
+      filteredProviders.sort((a: any, b: any) => {
+        switch (sort) {
+          case 'rating':
+            return (b.rating || 0) - (a.rating || 0);
+          case 'price_low':
+            return (a.startingPrice || 0) - (b.startingPrice || 0);
+          case 'price_high':
+            return (b.startingPrice || 0) - (a.startingPrice || 0);
+          case 'newest':
+            return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+          case 'experience':
+            return (b.experience || 0) - (a.experience || 0);
+          default:
+            return (b.rating || 0) - (a.rating || 0);
+        }
+      });
+
+      // Pagination
+      const total = filteredProviders.length;
+      const totalPages = Math.ceil(total / limitNum);
+      const providers = filteredProviders.slice(offset, offset + limitNum);
+
+      res.json({
+        providers,
+        total,
+        totalPages,
+        currentPage: pageNum,
+        hasNextPage: pageNum < totalPages,
+        hasPrevPage: pageNum > 1
+      });
+    } catch (error) {
+      console.error("Get providers list error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Public Jobs List with Filtering (SEO-friendly)
+  app.get("/api/jobs/list", async (req, res) => {
+    try {
+      const {
+        search = '',
+        location = '',
+        category = [],
+        minBudget = 0,
+        maxBudget = 100000,
+        urgency = 'all',
+        sort = 'newest',
+        page = 1,
+        limit = 12
+      } = req.query;
+
+      const categories = Array.isArray(category) ? category : (category ? [category] : []);
+      const pageNum = parseInt(page as string) || 1;
+      const limitNum = parseInt(limit as string) || 12;
+      const offset = (pageNum - 1) * limitNum;
+
+      // Get all jobs (for now, mock data will be used)
+      const allJobs = await storage.getAllJobs();
+      
+      // Apply filters
+      let filteredJobs = allJobs.filter((job: any) => {
+        // Search filter
+        if (search && !job.title?.toLowerCase().includes(search.toString().toLowerCase()) && 
+            !job.description?.toLowerCase().includes(search.toString().toLowerCase())) {
+          return false;
+        }
+        
+        // Location filter
+        if (location && job.location !== location) {
+          return false;
+        }
+        
+        // Category filter
+        if (categories.length > 0 && !categories.includes(job.category)) {
+          return false;
+        }
+        
+        // Budget filter
+        const budget = job.budget || 0;
+        if (budget < parseInt(minBudget as string) || budget > parseInt(maxBudget as string)) {
+          return false;
+        }
+        
+        // Urgency filter
+        if (urgency !== 'all' && job.urgency !== urgency) {
+          return false;
+        }
+        
+        return true;
+      });
+
+      // Apply sorting
+      filteredJobs.sort((a: any, b: any) => {
+        switch (sort) {
+          case 'newest':
+            return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+          case 'budget_high':
+            return (b.budget || 0) - (a.budget || 0);
+          case 'budget_low':
+            return (a.budget || 0) - (b.budget || 0);
+          case 'urgent':
+            const urgencyOrder = { 'urgent': 3, 'asap': 2, 'flexible': 1 };
+            return (urgencyOrder[b.urgency as keyof typeof urgencyOrder] || 0) - 
+                   (urgencyOrder[a.urgency as keyof typeof urgencyOrder] || 0);
+          case 'proposals':
+            return (b.proposals || 0) - (a.proposals || 0);
+          default:
+            return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        }
+      });
+
+      // Pagination
+      const total = filteredJobs.length;
+      const totalPages = Math.ceil(total / limitNum);
+      const jobs = filteredJobs.slice(offset, offset + limitNum);
+
+      res.json({
+        jobs,
+        total,
+        totalPages,
+        currentPage: pageNum,
+        hasNextPage: pageNum < totalPages,
+        hasPrevPage: pageNum > 1
+      });
+    } catch (error) {
+      console.error("Get jobs list error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Phase 4: SEO Landing Pages
   app.get("/api/seo/:slug", async (req, res) => {
     try {
