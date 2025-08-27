@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,31 +25,20 @@ const jobSchema = z.object({
 
 type JobFormData = z.infer<typeof jobSchema>;
 
-const serviceCategories = [
-  "Home Cleaning",
-  "Plumbing",
-  "Electrical Work",
-  "Carpentry",
-  "Painting",
-  "HVAC",
-  "Appliance Repair",
-  "Gardening",
-  "Beauty & Spa",
-  "Auto Services",
-  "Tech Support",
-  "Tutoring",
-  "Pet Care",
-  "Moving Services",
-  "Photography",
-  "Catering",
-  "Other"
-];
+// Categories will be fetched dynamically
 
 export default function PostJob() {
   const [, setLocation] = useLocation();
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [user] = useState({ id: "user-1" }); // This would come from auth context
   const { toast } = useToast();
+
+  const { data: categoriesData } = useQuery({
+    queryKey: ["/api/categories"],
+    enabled: true,
+  });
+
+  const serviceCategories = (categoriesData as any)?.categories || [];
 
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),

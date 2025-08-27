@@ -22,25 +22,7 @@ interface Job {
   status: "open" | "closed";
 }
 
-const serviceCategories = [
-  "All Categories",
-  "Home Cleaning",
-  "Plumbing", 
-  "Electrical Work",
-  "Carpentry",
-  "Painting",
-  "HVAC",
-  "Appliance Repair",
-  "Gardening",
-  "Beauty & Spa",
-  "Auto Services",
-  "Tech Support",
-  "Tutoring",
-  "Pet Care",
-  "Moving Services",
-  "Photography",
-  "Catering"
-];
+// Categories will be fetched dynamically
 
 const cities = [
   "All Cities",
@@ -67,32 +49,18 @@ export default function BrowseJobs() {
     search: ""
   });
 
+  const { data: categoriesData } = useQuery({
+    queryKey: ["/api/categories"],
+    enabled: true,
+  });
+
   const { data: jobsData, isLoading } = useQuery({
     queryKey: ["/api/jobs/browse", filters],
     enabled: true,
   });
 
-  const jobs: Job[] = jobsData?.jobs || [
-    // Mock data for now
-    {
-      id: "1",
-      title: "House Deep Cleaning Service Required",
-      category: "Home Cleaning",
-      description: "Need comprehensive cleaning of 3BHK apartment including kitchen, bathrooms, and all rooms.",
-      location: "Koramangala, Bangalore",
-      createdAt: "2 hours ago",
-      status: "open"
-    },
-    {
-      id: "2", 
-      title: "Plumbing Fix for Kitchen Sink",
-      category: "Plumbing",
-      description: "Kitchen sink is leaking and needs urgent repair. Preferably someone available today.",
-      location: "Bandra, Mumbai",
-      createdAt: "5 hours ago", 
-      status: "open"
-    }
-  ];
+  const serviceCategories = ["All Categories", ...((categoriesData as any)?.categories || [])];
+  const jobs: Job[] = (jobsData as any)?.jobs || [];
 
   const JobCard = ({ job }: { job: Job }) => (
     <Card className="hover:shadow-lg transition-shadow cursor-pointer" data-testid={`job-card-${job.id}`}>

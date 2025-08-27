@@ -233,6 +233,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Categories API
+  app.get("/api/categories", async (req, res) => {
+    try {
+      const categories = [
+        "Home Cleaning",
+        "Plumbing",
+        "Electrical Work", 
+        "Carpentry",
+        "Painting",
+        "HVAC",
+        "Appliance Repair",
+        "Gardening",
+        "Beauty & Spa",
+        "Auto Services",
+        "Tech Support",
+        "Tutoring",
+        "Pet Care",
+        "Moving Services",
+        "Photography",
+        "Catering",
+        "Event Planning",
+        "Interior Design"
+      ];
+      res.json({ categories });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Browse Jobs API
+  app.get("/api/jobs/browse", async (req, res) => {
+    try {
+      const { category, city, radius, search } = req.query;
+      const jobs = await storage.getAllJobs(); // Get all jobs from database
+      
+      // Filter jobs based on query parameters
+      let filteredJobs = jobs.filter(job => job.status === 'open');
+      
+      if (category && category !== 'All Categories') {
+        filteredJobs = filteredJobs.filter(job => job.category === category);
+      }
+      
+      if (search) {
+        const searchLower = (search as string).toLowerCase();
+        filteredJobs = filteredJobs.filter(job => 
+          job.title.toLowerCase().includes(searchLower) ||
+          job.description.toLowerCase().includes(searchLower)
+        );
+      }
+
+      res.json({ jobs: filteredJobs });
+    } catch (error) {
+      console.error("Browse jobs error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Recent Jobs API for homepage
+  app.get("/api/jobs/recent", async (req, res) => {
+    try {
+      const jobs = await storage.getAllJobs();
+      const recentJobs = jobs
+        .filter(job => job.status === 'open')
+        .sort((a, b) => {
+          const dateB = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateA = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateA - dateB;
+        })
+        .slice(0, 3); // Get 3 most recent jobs
+      
+      res.json({ jobs: recentJobs });
+    } catch (error) {
+      console.error("Recent jobs error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Individual Job Details API
+  app.get("/api/job/:jobId", async (req, res) => {
+    try {
+      const { jobId } = req.params;
+      const job = await storage.getJob(jobId);
+      
+      if (!job) {
+        return res.status(404).json({ message: "Job not found" });
+      }
+
+      // Get customer info for the job
+      const customer = await storage.getUser(job.customerId);
+      
+      const jobWithCustomer = {
+        ...job,
+        customer: {
+          name: customer?.name || "Anonymous",
+          rating: 4.8, // Could be calculated from reviews
+          totalJobs: 15 // Could be counted from database
+        }
+      };
+
+      res.json({ job: jobWithCustomer });
+    } catch (error) {
+      console.error("Job details error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.get("/api/jobs/near", async (req, res) => {
     try {
       const { latitude, longitude, radius = 5 } = z.object({

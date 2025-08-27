@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,30 +27,20 @@ const profileSchema = z.object({
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 
-const serviceCategories = [
-  "Home Cleaning",
-  "Plumbing",
-  "Electrical Work",
-  "Carpentry",
-  "Painting",
-  "HVAC",
-  "Appliance Repair",
-  "Gardening",
-  "Beauty & Spa",
-  "Auto Services",
-  "Tech Support",
-  "Tutoring",
-  "Pet Care",
-  "Moving Services",
-  "Photography",
-  "Catering",
-];
+// Categories will be fetched dynamically
 
 export default function ProviderProfile() {
   const [, setLocation] = useLocation();
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [documentsUploaded, setDocumentsUploaded] = useState(false);
   const { toast } = useToast();
+
+  const { data: categoriesData } = useQuery({
+    queryKey: ["/api/categories"],
+    enabled: true,
+  });
+
+  const serviceCategories = (categoriesData as any)?.categories || [];
 
   // Get userId from URL params
   const urlParams = new URLSearchParams(window.location.search);

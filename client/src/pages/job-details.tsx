@@ -34,21 +34,7 @@ export default function JobDetails() {
     enabled: !!jobId,
   });
 
-  const job: Job = jobData?.job || {
-    id: "1",
-    title: "House Deep Cleaning Service Required",
-    category: "Home Cleaning", 
-    description: "Need comprehensive cleaning of 3BHK apartment including kitchen, bathrooms, and all rooms. The house has been vacant for 2 months so it needs deep cleaning including ceiling fans, light fixtures, and all surfaces. Looking for experienced cleaners with their own supplies.",
-    location: "Koramangala, Bangalore",
-    budget: "₹2,000 - ₹3,000",
-    createdAt: "2 hours ago",
-    status: "open",
-    customer: {
-      name: "Priya Sharma",
-      rating: 4.8,
-      totalJobs: 15
-    }
-  };
+  const job: Job | undefined = (jobData as any)?.job;
 
   // Related jobs for SEO
   const relatedJobs = [
@@ -68,7 +54,7 @@ export default function JobDetails() {
     }
   ];
 
-  if (isLoading) {
+  if (isLoading || !job) {
     return (
       <div className="min-h-screen bg-background" data-testid="loading-state">
         <Navbar user={user} onSignIn={() => setLocation("/auth/login")} onGetStarted={() => setLocation("/auth/register")} />

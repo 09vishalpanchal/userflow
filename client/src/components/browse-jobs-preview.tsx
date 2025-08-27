@@ -24,36 +24,7 @@ export function BrowseJobsPreview() {
     enabled: true,
   });
 
-  // Mock data for demonstration - latest jobs preview
-  const recentJobs: Job[] = jobsData?.jobs || [
-    {
-      id: "1",
-      title: "House Deep Cleaning Service Required",
-      category: "Home Cleaning",
-      description: "Need comprehensive cleaning of 3BHK apartment including kitchen, bathrooms, and all rooms.",
-      location: "Koramangala, Bangalore",
-      createdAt: "2 hours ago",
-      status: "open"
-    },
-    {
-      id: "2", 
-      title: "Plumbing Fix for Kitchen Sink",
-      category: "Plumbing",
-      description: "Kitchen sink is leaking and needs urgent repair. Preferably someone available today.",
-      location: "Bandra, Mumbai",
-      createdAt: "5 hours ago", 
-      status: "open"
-    },
-    {
-      id: "3",
-      title: "Electrical Wiring for New Office",
-      category: "Electrical Work",
-      description: "Complete electrical setup needed for 1500 sq ft office space.",
-      location: "Gurgaon, Delhi NCR",
-      createdAt: "1 day ago",
-      status: "open"
-    }
-  ];
+  const recentJobs: Job[] = (jobsData as any)?.jobs || [];
 
   const JobCard = ({ job }: { job: Job }) => (
     <Card className="hover:shadow-md transition-shadow cursor-pointer" data-testid={`preview-job-${job.id}`}>
