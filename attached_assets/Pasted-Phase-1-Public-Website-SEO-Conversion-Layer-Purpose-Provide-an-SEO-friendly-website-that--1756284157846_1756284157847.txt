@@ -1,0 +1,45 @@
+Phase 1 – Public Website (SEO + Conversion Layer)
+🎯 Purpose: Provide an SEO-friendly website that attracts visitors, explains the platform, and converts them into customers or providers.
+Components
+1.	SEO-Friendly URLs
+o	/jobs/{city}/{category} instead of query parameters.
+o	Each category and city has an indexable landing page.
+2.	Home Page
+o	Hero: “Post a Job” / “Join as Provider” (main CTAs).
+o	How It Works: Two flows (customer vs provider).
+o	Browse Jobs Preview: Latest jobs (limited).
+o	Popular Categories: Quick links.
+o	Testimonials/Trust signals.
+o	Footer: About, Contact, Blog, Terms, Privacy.
+3.	Browse Jobs Page
+o	Sidebar filters:
+	Radius filter (location-based save with current user).
+	Category filter.
+	City based filter
+locality based filter
+o	If NOT logged in
+	Show all jobs by default.
+	Job detail → opens right side popup → “Login/Register to continue”.
+o	If logged in as Provider
+	Jobs filtered by 10km radius + categories from provider’s profile.
+	Job detail right side popup: description, budget, location.
+	Buttons: Bid Form (price + comment), Unlock Contact.
+	Restriction: Only verified providers can unlock.
+4.	How It Works Page
+o	For Customers: Post Job → Get Bids → Choose Provider → Contact.
+o	For Providers: Register → Get Verified → Browse Jobs → Unlock → Contact.
+o	Visuals + CTA buttons.
+5.	Service Provider Listing Page
+o	Public profile with: name, business details, rating, gallery, reviews.
+6.	Post a Job Page
+o	Job form (title, category, description, budget, location).
+o	If not logged in → redirect to login/register.
+o	If logged in as customer → submit job.
+7.	Provider Registration Page (Join as Partner)
+o	Benefits explained.
+o	Registration form (basic details + categories).
+o	CTA: “Register & Start Getting Jobs”.
+8.	Other Pages
+o	About Us, Contact Us (form + Google Map), FAQs (customers vs providers), Blog (SEO), Privacy Policy, Terms.
+
+9.	Separated Job details page So Google can crawl it. Also show releted jobs below it
