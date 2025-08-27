@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
@@ -13,9 +13,15 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { authUtils } from "@/lib/auth";
 import { ArrowLeft } from "lucide-react";
+import PhoneInput from "react-phone-number-input";
+import { isValidPhoneNumber, parsePhoneNumber } from "libphonenumber-js";
+import "react-phone-number-input/style.css";
 
 const phoneSchema = z.object({
-  phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),
+  phoneNumber: z.string().refine((phone) => {
+    if (!phone) return false;
+    return isValidPhoneNumber(phone);
+  }, "Please enter a valid phone number"),
 });
 
 const otpSchema = z.object({
@@ -35,7 +41,28 @@ export default function UnifiedAuthModal({ isOpen, onClose }: UnifiedAuthModalPr
   const [step, setStep] = useState<"phone" | "otp">("phone");
   const [phoneData, setPhoneData] = useState<PhoneFormData | null>(null);
   const [isLogin, setIsLogin] = useState(true);
+  const [defaultCountry, setDefaultCountry] = useState<string>("IN");
   const { toast } = useToast();
+
+  // Auto-detect user's country based on location
+  useEffect(() => {
+    const detectCountry = async () => {
+      try {
+        // Try to get user's location from IP
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        if (data.country_code) {
+          setDefaultCountry(data.country_code);
+        }
+      } catch (error) {
+        // Fallback to India if detection fails
+        console.log('Could not detect location, defaulting to IN');
+        setDefaultCountry("IN");
+      }
+    };
+    
+    detectCountry();
+  }, []);
 
   const phoneForm = useForm<PhoneFormData>({
     resolver: zodResolver(phoneSchema),
@@ -53,9 +80,13 @@ export default function UnifiedAuthModal({ isOpen, onClose }: UnifiedAuthModalPr
 
   const checkUserMutation = useMutation({
     mutationFn: async (phoneNumber: string) => {
+      // Parse phone number to get national format for backend
+      const parsedPhone = parsePhoneNumber(phoneNumber);
+      const nationalNumber = parsedPhone?.number || phoneNumber;
+      
       // Check if user exists by attempting login
       try {
-        const response = await apiRequest("POST", "/api/auth/login", { phoneNumber });
+        const response = await apiRequest("POST", "/api/auth/login", { phoneNumber: nationalNumber });
         return { exists: true, data: await response.json() };
       } catch (error: any) {
         // If user not found, this is a new user
@@ -69,7 +100,9 @@ export default function UnifiedAuthModal({ isOpen, onClose }: UnifiedAuthModalPr
       if (result.exists) {
         // User exists, proceed with login
         setIsLogin(true);
-        setPhoneData({ phoneNumber });
+        const parsedPhone = parsePhoneNumber(phoneNumber);
+        const nationalNumber = parsedPhone?.number || phoneNumber;
+        setPhoneData({ phoneNumber: nationalNumber });
         setStep("otp");
         toast({
           title: "OTP Sent",
@@ -93,7 +126,9 @@ export default function UnifiedAuthModal({ isOpen, onClose }: UnifiedAuthModalPr
           description: "Creating a new account for this phone number.",
         });
         // Start registration process
-        registerMutation.mutate({ phoneNumber });
+        const parsedPhone = parsePhoneNumber(phoneNumber);
+        const nationalNumber = parsedPhone?.number || phoneNumber;
+        registerMutation.mutate({ phoneNumber: nationalNumber });
       }
     },
     onError: (error: any) => {
@@ -276,10 +311,21 @@ export default function UnifiedAuthModal({ isOpen, onClose }: UnifiedAuthModalPr
                     <FormItem>
                       <FormLabel>Phone Number</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="Enter your phone number" 
-                          {...field} 
+                        <PhoneInput
+                          placeholder="Enter phone number"
+                          value={field.value}
+                          onChange={field.onChange}
+                          defaultCountry={defaultCountry as any}
+                          international
+                          countryCallingCodeEditable={false}
+                          className="w-full"
                           data-testid="input-phone-number"
+                          style={{
+                            '--PhoneInputCountryFlag-aspectRatio': '1.333',
+                            '--PhoneInputCountryFlag-height': '1em',
+                            '--PhoneInputCountrySelectArrow-width': '0.3em',
+                            '--PhoneInputCountrySelectArrow-color': '#6b7280',
+                          } as any}
                         />
                       </FormControl>
                       <FormMessage />
