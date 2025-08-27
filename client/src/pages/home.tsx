@@ -4,6 +4,7 @@ import { Navbar } from "@/components/navbar";
 import { HeroSection } from "@/components/hero-section";
 import { ServiceCategories } from "@/components/service-categories";
 import { HowItWorks } from "@/components/how-it-works";
+import { BrowseJobsPreview } from "@/components/browse-jobs-preview";
 import { FeaturedProviders } from "@/components/featured-providers";
 import { Testimonials } from "@/components/testimonials";
 import { MobileAppSection } from "@/components/mobile-app-section";
@@ -50,6 +51,7 @@ export default function Home() {
         />
         <ServiceCategories />
         <HowItWorks />
+        <BrowseJobsPreview />
         <FeaturedProviders />
         <Testimonials />
         <MobileAppSection />
