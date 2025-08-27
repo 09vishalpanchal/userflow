@@ -150,6 +150,7 @@ export default function AdminSidebarDashboard() {
     { id: "users", label: "Users", icon: Users },
     { id: "providers", label: "Providers", icon: Briefcase },
     { id: "jobs", label: "Jobs", icon: FileText },
+    { id: "transactions", label: "Transactions", icon: Activity },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
     { id: "reports", label: "Reports", icon: Activity },
     { id: "messages", label: "Messages", icon: MessageSquare },
@@ -463,21 +464,113 @@ export default function AdminSidebarDashboard() {
     addBalanceMutation.mutate({ providerId: addBalanceModal.providerId, amount });
   };
 
+  // Users management state
+  const [usersFilters, setUsersFilters] = useState({
+    search: '',
+    userType: 'all',
+    status: 'all',
+    page: 1,
+    limit: 10
+  });
+
+  // Users query with pagination and filters
+  const { data: usersData, isLoading: usersLoading } = useQuery({
+    queryKey: ['/api/admin/users/paginated', usersFilters],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        search: usersFilters.search,
+        userType: usersFilters.userType,
+        status: usersFilters.status,
+        page: usersFilters.page.toString(),
+        limit: usersFilters.limit.toString()
+      });
+      const response = await apiRequest("GET", `/api/admin/users/paginated?${params}`);
+      return response.json();
+    },
+  });
+
   const renderUsers = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">User Management</h2>
-      
-      <div className="grid gap-4">
-        {allUsersData?.users?.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-8">
-              <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Users Found</h3>
-              <p className="text-gray-600">There are currently no users in the system.</p>
-            </CardContent>
-          </Card>
-        ) : (
-          allUsersData?.users?.map((user: any) => (
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">User Management</h2>
+        <div className="flex items-center gap-3">
+          <Badge variant="outline">
+            Total: {usersData?.total || 0} users
+          </Badge>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <Label htmlFor="user-search">Search Users</Label>
+              <Input
+                id="user-search"
+                placeholder="Name or phone..."
+                value={usersFilters.search}
+                onChange={(e) => setUsersFilters(prev => ({ ...prev, search: e.target.value, page: 1 }))}
+              />
+            </div>
+            <div>
+              <Label>User Type</Label>
+              <select
+                className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                value={usersFilters.userType}
+                onChange={(e) => setUsersFilters(prev => ({ ...prev, userType: e.target.value, page: 1 }))}
+              >
+                <option value="all">All Types</option>
+                <option value="customer">Customer</option>
+                <option value="provider">Provider</option>
+              </select>
+            </div>
+            <div>
+              <Label>Status</Label>
+              <select
+                className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                value={usersFilters.status}
+                onChange={(e) => setUsersFilters(prev => ({ ...prev, status: e.target.value, page: 1 }))}
+              >
+                <option value="all">All Status</option>
+                <option value="approved">Approved</option>
+                <option value="pending">Pending</option>
+                <option value="blocked">Blocked</option>
+              </select>
+            </div>
+            <div>
+              <Label>Per Page</Label>
+              <select
+                className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                value={usersFilters.limit}
+                onChange={(e) => setUsersFilters(prev => ({ ...prev, limit: parseInt(e.target.value), page: 1 }))}
+              >
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Users List */}
+      {usersLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+        </div>
+      ) : usersData?.users?.length === 0 ? (
+        <Card>
+          <CardContent className="text-center py-8">
+            <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Users Found</h3>
+            <p className="text-gray-600">No users match your current filters.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {usersData?.users?.map((user: any) => (
             <Card key={user.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -526,27 +619,163 @@ export default function AdminSidebarDashboard() {
                 </div>
               </CardContent>
             </Card>
-          ))
-        )}
-      </div>
+          ))}
+
+          {/* Pagination */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  Showing {((usersFilters.page - 1) * usersFilters.limit) + 1} to{' '}
+                  {Math.min(usersFilters.page * usersFilters.limit, usersData?.total || 0)} of{' '}
+                  {usersData?.total || 0} users
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={usersFilters.page <= 1}
+                    onClick={() => setUsersFilters(prev => ({ ...prev, page: prev.page - 1 }))}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm">
+                    Page {usersFilters.page} of {usersData?.totalPages || 1}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={usersFilters.page >= (usersData?.totalPages || 1)}
+                    onClick={() => setUsersFilters(prev => ({ ...prev, page: prev.page + 1 }))}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 
+  // Jobs management state
+  const [jobsFilters, setJobsFilters] = useState({
+    search: '',
+    category: 'all',
+    status: 'all',
+    page: 1,
+    limit: 10
+  });
+
+  // Jobs query
+  const { data: jobsData, isLoading: jobsLoading } = useQuery({
+    queryKey: ['/api/admin/jobs/paginated', jobsFilters],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        search: jobsFilters.search,
+        category: jobsFilters.category,
+        status: jobsFilters.status,
+        page: jobsFilters.page.toString(),
+        limit: jobsFilters.limit.toString()
+      });
+      const response = await apiRequest("GET", `/api/admin/jobs/paginated?${params}`);
+      return response.json();
+    },
+  });
+
+  // Transactions management state
+  const [transactionsFilters, setTransactionsFilters] = useState({
+    search: '',
+    type: 'all',
+    page: 1,
+    limit: 10
+  });
+
+  // Transactions query
+  const { data: transactionsData, isLoading: transactionsLoading } = useQuery({
+    queryKey: ['/api/admin/transactions/paginated', transactionsFilters],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        search: transactionsFilters.search,
+        type: transactionsFilters.type,
+        page: transactionsFilters.page.toString(),
+        limit: transactionsFilters.limit.toString()
+      });
+      const response = await apiRequest("GET", `/api/admin/transactions/paginated?${params}`);
+      return response.json();
+    },
+  });
+
   const renderProviders = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Provider Management</h2>
-      
-      <div className="grid gap-4">
-        {allUsersData?.users?.filter((user: any) => user.userType === 'provider').length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-8">
-              <Briefcase className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Providers Found</h3>
-              <p className="text-gray-600">There are currently no providers in the system.</p>
-            </CardContent>
-          </Card>
-        ) : (
-          allUsersData?.users?.filter((user: any) => user.userType === 'provider').map((provider: any) => (
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Provider Management</h2>
+        <div className="flex items-center gap-3">
+          <Badge variant="outline">
+            Total: {usersData?.users?.filter((u: any) => u.userType === 'provider').length || 0} providers
+          </Badge>
+        </div>
+      </div>
+
+      {/* Use same filters as users but only show providers */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="provider-search">Search Providers</Label>
+              <Input
+                id="provider-search"
+                placeholder="Business name or phone..."
+                value={usersFilters.search}
+                onChange={(e) => setUsersFilters(prev => ({ ...prev, search: e.target.value, page: 1 }))}
+              />
+            </div>
+            <div>
+              <Label>Status</Label>
+              <select
+                className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                value={usersFilters.status}
+                onChange={(e) => setUsersFilters(prev => ({ ...prev, status: e.target.value, page: 1 }))}
+              >
+                <option value="all">All Status</option>
+                <option value="approved">Approved</option>
+                <option value="pending">Pending</option>
+                <option value="blocked">Blocked</option>
+              </select>
+            </div>
+            <div>
+              <Label>Per Page</Label>
+              <select
+                className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                value={usersFilters.limit}
+                onChange={(e) => setUsersFilters(prev => ({ ...prev, limit: parseInt(e.target.value), page: 1 }))}
+              >
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Providers List */}
+      {usersLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+        </div>
+      ) : usersData?.users?.filter((user: any) => user.userType === 'provider').length === 0 ? (
+        <Card>
+          <CardContent className="text-center py-8">
+            <Briefcase className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Providers Found</h3>
+            <p className="text-gray-600">No providers match your current filters.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {usersData?.users?.filter((user: any) => user.userType === 'provider').map((provider: any) => (
             <Card key={provider.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
@@ -596,9 +825,300 @@ export default function AdminSidebarDashboard() {
                 </div>
               </CardContent>
             </Card>
-          ))
-        )}
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderJobs = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Job Management</h2>
+        <div className="flex items-center gap-3">
+          <Badge variant="outline">
+            Total: {jobsData?.total || 0} jobs
+          </Badge>
+        </div>
       </div>
+
+      {/* Job Filters */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <Label htmlFor="job-search">Search Jobs</Label>
+              <Input
+                id="job-search"
+                placeholder="Title or description..."
+                value={jobsFilters.search}
+                onChange={(e) => setJobsFilters(prev => ({ ...prev, search: e.target.value, page: 1 }))}
+              />
+            </div>
+            <div>
+              <Label>Category</Label>
+              <select
+                className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                value={jobsFilters.category}
+                onChange={(e) => setJobsFilters(prev => ({ ...prev, category: e.target.value, page: 1 }))}
+              >
+                <option value="all">All Categories</option>
+                <option value="Home Cleaning">Home Cleaning</option>
+                <option value="Plumbing">Plumbing</option>
+                <option value="Electrical Work">Electrical Work</option>
+                <option value="Carpentry">Carpentry</option>
+                <option value="Painting">Painting</option>
+                <option value="Gardening">Gardening</option>
+              </select>
+            </div>
+            <div>
+              <Label>Status</Label>
+              <select
+                className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                value={jobsFilters.status}
+                onChange={(e) => setJobsFilters(prev => ({ ...prev, status: e.target.value, page: 1 }))}
+              >
+                <option value="all">All Status</option>
+                <option value="open">Open</option>
+                <option value="assigned">Assigned</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div>
+              <Label>Per Page</Label>
+              <select
+                className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                value={jobsFilters.limit}
+                onChange={(e) => setJobsFilters(prev => ({ ...prev, limit: parseInt(e.target.value), page: 1 }))}
+              >
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Jobs List */}
+      {jobsLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+        </div>
+      ) : jobsData?.jobs?.length === 0 ? (
+        <Card>
+          <CardContent className="text-center py-8">
+            <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Jobs Found</h3>
+            <p className="text-gray-600">No jobs match your current filters.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {jobsData?.jobs?.map((job: any) => (
+            <Card key={job.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <h3 className="font-semibold">{job.title}</h3>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">{job.category}</Badge>
+                        <Badge variant={job.urgency === 'urgent' ? 'destructive' : job.urgency === 'asap' ? 'default' : 'secondary'}>
+                          {job.urgency}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-green-600">₹{job.budget}</div>
+                      <div className="text-sm text-muted-foreground">{job.location}</div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground line-clamp-2">{job.description}</p>
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-muted-foreground">
+                      Posted: {new Date(job.createdAt).toLocaleDateString()} | 
+                      Proposals: {job.proposals || 0}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline">
+                        <Eye size={14} className="mr-1" />
+                        View
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+
+          {/* Pagination */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  Showing {((jobsFilters.page - 1) * jobsFilters.limit) + 1} to{' '}
+                  {Math.min(jobsFilters.page * jobsFilters.limit, jobsData?.total || 0)} of{' '}
+                  {jobsData?.total || 0} jobs
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={jobsFilters.page <= 1}
+                    onClick={() => setJobsFilters(prev => ({ ...prev, page: prev.page - 1 }))}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm">
+                    Page {jobsFilters.page} of {jobsData?.totalPages || 1}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={jobsFilters.page >= (jobsData?.totalPages || 1)}
+                    onClick={() => setJobsFilters(prev => ({ ...prev, page: prev.page + 1 }))}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderTransactions = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Transaction Management</h2>
+        <div className="flex items-center gap-3">
+          <Badge variant="outline">
+            Total: {transactionsData?.total || 0} transactions
+          </Badge>
+        </div>
+      </div>
+
+      {/* Transaction Filters */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="transaction-search">Search Transactions</Label>
+              <Input
+                id="transaction-search"
+                placeholder="Transaction ID or description..."
+                value={transactionsFilters.search}
+                onChange={(e) => setTransactionsFilters(prev => ({ ...prev, search: e.target.value, page: 1 }))}
+              />
+            </div>
+            <div>
+              <Label>Type</Label>
+              <select
+                className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                value={transactionsFilters.type}
+                onChange={(e) => setTransactionsFilters(prev => ({ ...prev, type: e.target.value, page: 1 }))}
+              >
+                <option value="all">All Types</option>
+                <option value="recharge">Recharge</option>
+                <option value="unlock">Unlock</option>
+                <option value="refund">Refund</option>
+              </select>
+            </div>
+            <div>
+              <Label>Per Page</Label>
+              <select
+                className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                value={transactionsFilters.limit}
+                onChange={(e) => setTransactionsFilters(prev => ({ ...prev, limit: parseInt(e.target.value), page: 1 }))}
+              >
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Transactions List */}
+      {transactionsLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+        </div>
+      ) : transactionsData?.transactions?.length === 0 ? (
+        <Card>
+          <CardContent className="text-center py-8">
+            <Activity className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Transactions Found</h3>
+            <p className="text-gray-600">No transactions match your current filters.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {transactionsData?.transactions?.map((transaction: any) => (
+            <Card key={transaction.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <Badge variant={transaction.type === 'recharge' ? 'default' : transaction.type === 'unlock' ? 'secondary' : 'destructive'}>
+                        {transaction.type}
+                      </Badge>
+                      <span className="font-medium">₹{transaction.amount}</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{transaction.description}</p>
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(transaction.createdAt).toLocaleString()}
+                    </div>
+                  </div>
+                  <Button size="sm" variant="outline">
+                    <Eye size={14} className="mr-1" />
+                    Details
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+
+          {/* Pagination */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  Showing {((transactionsFilters.page - 1) * transactionsFilters.limit) + 1} to{' '}
+                  {Math.min(transactionsFilters.page * transactionsFilters.limit, transactionsData?.total || 0)} of{' '}
+                  {transactionsData?.total || 0} transactions
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={transactionsFilters.page <= 1}
+                    onClick={() => setTransactionsFilters(prev => ({ ...prev, page: prev.page - 1 }))}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm">
+                    Page {transactionsFilters.page} of {transactionsData?.totalPages || 1}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={transactionsFilters.page >= (transactionsData?.totalPages || 1)}
+                    onClick={() => setTransactionsFilters(prev => ({ ...prev, page: prev.page + 1 }))}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 
@@ -614,16 +1134,9 @@ export default function AdminSidebarDashboard() {
         return renderProviders();
       // Handled above with providers case
       case "jobs":
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Job Management</h2>
-            <Card>
-              <CardContent className="text-center py-8">
-                <p className="text-muted-foreground">Job management features coming soon</p>
-              </CardContent>
-            </Card>
-          </div>
-        );
+        return renderJobs();
+      case "transactions":
+        return renderTransactions();
       case "analytics":
         return (
           <div className="space-y-6">

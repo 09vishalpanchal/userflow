@@ -1283,6 +1283,158 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin paginated users endpoint
+  app.get("/api/admin/users/paginated", async (req, res) => {
+    try {
+      const { search = '', userType = 'all', status = 'all', page = '1', limit = '10' } = req.query;
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
+      const offset = (pageNum - 1) * limitNum;
+
+      const users = await storage.getAllUsers();
+      
+      // Filter users based on query parameters
+      let filteredUsers = users;
+      
+      if (search) {
+        const searchTerm = (search as string).toLowerCase();
+        filteredUsers = filteredUsers.filter(user =>
+          user.name?.toLowerCase().includes(searchTerm) ||
+          user.phoneNumber?.toLowerCase().includes(searchTerm) ||
+          user.businessName?.toLowerCase().includes(searchTerm)
+        );
+      }
+      
+      if (userType !== 'all') {
+        filteredUsers = filteredUsers.filter(user => user.userType === userType);
+      }
+      
+      if (status !== 'all') {
+        if (status === 'approved') {
+          filteredUsers = filteredUsers.filter(user => user.isApproved && !user.isBlocked);
+        } else if (status === 'pending') {
+          filteredUsers = filteredUsers.filter(user => !user.isApproved);
+        } else if (status === 'blocked') {
+          filteredUsers = filteredUsers.filter(user => user.isBlocked);
+        }
+      }
+
+      const total = filteredUsers.length;
+      const totalPages = Math.ceil(total / limitNum);
+      const paginatedUsers = filteredUsers.slice(offset, offset + limitNum);
+
+      // Add wallet balances for providers
+      const usersWithWallets = await Promise.all(
+        paginatedUsers.map(async (user) => {
+          if (user.userType === 'provider') {
+            const wallet = await storage.getWallet(user.id);
+            return { ...user, walletBalance: wallet?.balance || '0.00' };
+          }
+          return user;
+        })
+      );
+
+      res.json({
+        users: usersWithWallets,
+        total,
+        totalPages,
+        currentPage: pageNum,
+        limit: limitNum
+      });
+    } catch (error) {
+      console.error("Get paginated users error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Admin paginated jobs endpoint
+  app.get("/api/admin/jobs/paginated", async (req, res) => {
+    try {
+      const { search = '', category = 'all', status = 'all', page = '1', limit = '10' } = req.query;
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
+      const offset = (pageNum - 1) * limitNum;
+
+      const jobs = await storage.getAllJobs();
+      
+      // Filter jobs based on query parameters
+      let filteredJobs = jobs;
+      
+      if (search) {
+        const searchTerm = (search as string).toLowerCase();
+        filteredJobs = filteredJobs.filter(job =>
+          job.title?.toLowerCase().includes(searchTerm) ||
+          job.description?.toLowerCase().includes(searchTerm)
+        );
+      }
+      
+      if (category !== 'all') {
+        filteredJobs = filteredJobs.filter(job => job.category === category);
+      }
+      
+      if (status !== 'all') {
+        filteredJobs = filteredJobs.filter(job => job.status === status);
+      }
+
+      const total = filteredJobs.length;
+      const totalPages = Math.ceil(total / limitNum);
+      const paginatedJobs = filteredJobs.slice(offset, offset + limitNum);
+
+      res.json({
+        jobs: paginatedJobs,
+        total,
+        totalPages,
+        currentPage: pageNum,
+        limit: limitNum
+      });
+    } catch (error) {
+      console.error("Get paginated jobs error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Admin paginated transactions endpoint
+  app.get("/api/admin/transactions/paginated", async (req, res) => {
+    try {
+      const { search = '', type = 'all', page = '1', limit = '10' } = req.query;
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
+      const offset = (pageNum - 1) * limitNum;
+
+      const transactions = await storage.getAllTransactions();
+      
+      // Filter transactions based on query parameters
+      let filteredTransactions = transactions;
+      
+      if (search) {
+        const searchTerm = (search as string).toLowerCase();
+        filteredTransactions = filteredTransactions.filter(transaction =>
+          transaction.id?.toLowerCase().includes(searchTerm) ||
+          transaction.description?.toLowerCase().includes(searchTerm)
+        );
+      }
+      
+      if (type !== 'all') {
+        filteredTransactions = filteredTransactions.filter(transaction => transaction.type === type);
+      }
+
+      const total = filteredTransactions.length;
+      const totalPages = Math.ceil(total / limitNum);
+      const paginatedTransactions = filteredTransactions.slice(offset, offset + limitNum);
+
+      res.json({
+        transactions: paginatedTransactions,
+        total,
+        totalPages,
+        currentPage: pageNum,
+        limit: limitNum
+      });
+    } catch (error) {
+      console.error("Get paginated transactions error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Phase 4: SEO Landing Pages
   app.get("/api/seo/:slug", async (req, res) => {
     try {
