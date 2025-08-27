@@ -1,0 +1,57 @@
+Phase 2 – User System & Core Job Flow (MVP)
+🎯 Purpose: Enable customers to post jobs and providers to unlock leads.
+________________________________________
+Authentication Flow
+1.	Registration
+o	Only via phone number + OTP (SMS API).
+o	Password is optional but can be set later.
+2.	Login
+o	By OTP or by password (if already set).
+3.	Profile Completion (mandatory after first login)
+o	Customer Profile
+	Name, Email, Set password
+	Address (Google Maps auto-detect, editable).
+o	Provider Profile
+	Name, Email, Set password
+	Business details.
+	Address (Google Maps).
+	Upload Documents (ID proof, GST, license, etc.).
+	Sent to Admin for approval.
+________________________________________
+Customer Workflow
+1.	Post a Job
+o	Fill form: category, description, budget, location.
+o	AI Enhancement: ChatGPT API refines description → shows preview → customer confirms.
+2.	After Submission
+o	Job saved in DB with “Open” status.
+o	Notifications sent to providers in radius (SMS/WhatsApp/push).
+3.	Waiting Stage
+o	Customer sees job status (“Open”, “Unlocked by Providers”).
+o	Providers must unlock to view customer contact.
+________________________________________
+Provider Workflow
+1.	After Approval by Admin
+o	Provider can create public profile (gallery, description, business info).
+2.	Browse Jobs
+o	Default radius: 5 km (can expand up to 20 km).
+o	Jobs visible from categories selected in profile.
+3.	Unlock Job
+o	Provider must click “Unlock Contact”.
+o	System checks wallet balance:
+	If balance ≥ unlock fee → deduct.
+	If balance < unlock fee → show recharge popup.
+o	Unlock success:
+	Provider gets customer phone/WhatsApp.
+	Job marked “Unlocked” for that provider.
+o	Restriction: Only first 3 providers can unlock.
+4.	Unlocked Job List
+o	Provider sees history of unlocked jobs with customer details.
+________________________________________
+Wallet System (Provider only)
+•	Recharge wallet via Razorpay.
+•	Each unlock deducts fixed admin-defined fee.
+•	Wallet screens:
+o	Current Balance.
+o	Recharge history.
+o	Deduction history.
+•	Low balance triggers notification.

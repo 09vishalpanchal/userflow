@@ -13,9 +13,11 @@ export const users = pgTable("users", {
   phoneNumber: varchar("phone_number", { length: 20 }).notNull().unique(),
   name: text("name"),
   email: text("email"),
+  password: text("password"), // Optional password
   userType: userTypeEnum("user_type").notNull(),
   isVerified: boolean("is_verified").default(false),
   isBlocked: boolean("is_blocked").default(false),
+  profileCompleted: boolean("profile_completed").default(false), // Track if profile is completed
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -49,6 +51,11 @@ export const providerProfiles = pgTable("provider_profiles", {
   maxServiceRadius: integer("max_service_radius").default(20),
   status: providerStatusEnum("status").default('pending'),
   documentsUploaded: boolean("documents_uploaded").default(false),
+  documents: text("documents").array(), // Array of document URLs
+  gallery: text("gallery").array(), // Array of image URLs for public profile
+  publicProfile: text("public_profile"), // Public description for customers
+  rating: decimal("rating", { precision: 3, scale: 2 }).default('0'), // Average rating
+  totalJobs: integer("total_jobs").default(0), // Total completed jobs
   approvedAt: timestamp("approved_at"),
 });
 
@@ -58,12 +65,15 @@ export const jobs = pgTable("jobs", {
   category: text("category").notNull(),
   title: text("title").notNull(),
   description: text("description").notNull(),
+  originalDescription: text("original_description"), // Before AI enhancement
+  budget: text("budget"), // Budget range
   location: text("location").notNull(),
   latitude: decimal("latitude", { precision: 10, scale: 8 }),
   longitude: decimal("longitude", { precision: 11, scale: 8 }),
   status: jobStatusEnum("status").default('open'),
   unlockCount: integer("unlock_count").default(0),
   maxUnlocks: integer("max_unlocks").default(3),
+  notificationsSent: boolean("notifications_sent").default(false), // Track if notifications sent
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -219,3 +229,29 @@ export type Transaction = typeof transactions.$inferSelect;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type JobUnlock = typeof jobUnlocks.$inferSelect;
 export type InsertJobUnlock = z.infer<typeof insertJobUnlockSchema>;
+
+// Profile completion schemas
+export const customerProfileCompletionSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().optional(),
+  location: z.string().min(5, "Please enter a complete address"),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+});
+
+export const providerProfileCompletionSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().optional(),
+  businessName: z.string().min(2, "Business name is required"),
+  businessDetails: z.string().min(20, "Please provide detailed business information"),
+  serviceCategories: z.array(z.string()).min(1, "Select at least one service category"),
+  location: z.string().min(5, "Please enter your business address"),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+  serviceRadius: z.number().min(1).max(20).default(5),
+});
+
+export type CustomerProfileCompletion = z.infer<typeof customerProfileCompletionSchema>;
+export type ProviderProfileCompletion = z.infer<typeof providerProfileCompletionSchema>;

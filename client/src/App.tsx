@@ -9,13 +9,17 @@ import Home from "@/pages/home";
 import Register from "@/pages/auth/register";
 import Login from "@/pages/auth/login";
 import CustomerDashboard from "@/pages/customer/dashboard";
-import CustomerProfile from "@/pages/customer/profile";
+import CustomerDashboardProfile from "@/pages/customer/profile";
 import PostJob from "@/pages/customer/post-job";
 import ProviderDashboard from "@/pages/provider/dashboard";
-import ProviderProfile from "@/pages/provider/profile";
+import ProviderDashboardProfile from "@/pages/provider/profile";
 import ProviderWallet from "@/pages/provider/wallet";
 import AdminDashboard from "@/pages/admin/dashboard";
 import NotFound from "@/pages/not-found";
+
+// Profile Completion Pages
+import CustomerProfileCompletion from "@/pages/profile-completion/customer-profile";
+import ProviderProfileCompletion from "@/pages/profile-completion/provider-profile";
 
 // Phase 1 Public Pages - Lazy loaded for better SEO
 const BrowseJobs = lazy(() => import("@/pages/browse-jobs"));
@@ -47,6 +51,10 @@ function Router() {
         <Route path="/auth/register" component={Register} />
         <Route path="/auth/login" component={Login} />
         
+        {/* Profile Completion Routes */}
+        <Route path="/profile/customer" component={CustomerProfileCompletion} />
+        <Route path="/profile/provider" component={ProviderProfileCompletion} />
+        
         {/* Public Pages */}
         <Route path="/browse-jobs" component={BrowseJobs} />
         <Route path="/jobs/:city/:category" component={BrowseJobs} />
@@ -64,11 +72,11 @@ function Router() {
         
         {/* Customer Routes */}
         <Route path="/customer/dashboard" component={CustomerDashboard} />
-        <Route path="/customer/profile" component={CustomerProfile} />
+        <Route path="/customer/profile" component={CustomerDashboardProfile} />
         
         {/* Provider Routes */}
         <Route path="/provider/dashboard" component={ProviderDashboard} />
-        <Route path="/provider/profile" component={ProviderProfile} />
+        <Route path="/provider/profile" component={ProviderDashboardProfile} />
         <Route path="/provider/wallet" component={ProviderWallet} />
         
         {/* Admin Routes */}

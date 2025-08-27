@@ -34,6 +34,10 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
   
+  // Profile completion methods
+  completeCustomerProfile(userId: string, profileData: any): Promise<User>;
+  completeProviderProfile(userId: string, profileData: any): Promise<User>;
+  
   // OTP methods
   createOtp(otp: InsertOtpCode): Promise<OtpCode>;
   getValidOtp(phoneNumber: string, code: string): Promise<OtpCode | undefined>;
@@ -277,6 +281,88 @@ export class DatabaseStorage implements IStorage {
       .update(jobs)
       .set({ unlockCount: sql`${jobs.unlockCount} + 1` })
       .where(eq(jobs.id, jobId));
+  }
+
+  // Profile completion methods
+  async completeCustomerProfile(userId: string, profileData: any): Promise<User> {
+    // Update user table
+    const [user] = await db
+      .update(users)
+      .set({
+        name: profileData.name,
+        email: profileData.email,
+        password: profileData.password,
+        profileCompleted: true
+      })
+      .where(eq(users.id, userId))
+      .returning();
+
+    // Create or update customer profile
+    await db
+      .insert(customerProfiles)
+      .values({
+        userId: userId,
+        location: profileData.location,
+        latitude: profileData.latitude?.toString(),
+        longitude: profileData.longitude?.toString()
+      })
+      .onConflictDoUpdate({
+        target: customerProfiles.userId,
+        set: {
+          location: profileData.location,
+          latitude: profileData.latitude?.toString(),
+          longitude: profileData.longitude?.toString()
+        }
+      });
+
+    return user;
+  }
+
+  async completeProviderProfile(userId: string, profileData: any): Promise<User> {
+    // Update user table
+    const [user] = await db
+      .update(users)
+      .set({
+        name: profileData.name,
+        email: profileData.email,
+        password: profileData.password,
+        profileCompleted: true
+      })
+      .where(eq(users.id, userId))
+      .returning();
+
+    // Create or update provider profile
+    await db
+      .insert(providerProfiles)
+      .values({
+        userId: userId,
+        businessName: profileData.businessName,
+        businessDetails: profileData.businessDetails,
+        serviceCategories: profileData.serviceCategories,
+        location: profileData.location,
+        latitude: profileData.latitude?.toString(),
+        longitude: profileData.longitude?.toString(),
+        serviceRadius: profileData.serviceRadius,
+        status: 'pending',
+        documentsUploaded: profileData.documents?.length > 0 || false,
+        documents: profileData.documents || []
+      })
+      .onConflictDoUpdate({
+        target: providerProfiles.userId,
+        set: {
+          businessName: profileData.businessName,
+          businessDetails: profileData.businessDetails,
+          serviceCategories: profileData.serviceCategories,
+          location: profileData.location,
+          latitude: profileData.latitude?.toString(),
+          longitude: profileData.longitude?.toString(),
+          serviceRadius: profileData.serviceRadius,
+          documentsUploaded: profileData.documents?.length > 0 || false,
+          documents: profileData.documents || []
+        }
+      });
+
+    return user;
   }
 }
 

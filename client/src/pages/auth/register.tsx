@@ -96,11 +96,11 @@ export default function Register() {
         description: "Your account has been created successfully.",
       });
       
-      // Redirect based on user type
+      // Redirect to profile completion based on user type
       if (phoneData?.userType === "customer") {
-        setLocation(`/customer/profile?userId=${data.user.id}`);
+        setLocation(`/profile/customer?userId=${data.user.id}`);
       } else {
-        setLocation(`/provider/profile?userId=${data.user.id}`);
+        setLocation(`/profile/provider?userId=${data.user.id}`);
       }
     },
     onError: (error: any) => {

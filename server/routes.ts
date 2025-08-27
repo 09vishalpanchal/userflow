@@ -376,6 +376,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Profile completion routes
+  app.post("/api/profile/customer/complete", async (req, res) => {
+    try {
+      const { userId, ...profileData } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+      
+      const user = await storage.completeCustomerProfile(userId, profileData);
+      
+      res.json({ 
+        message: "Customer profile completed successfully",
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          profileCompleted: user.profileCompleted
+        }
+      });
+    } catch (error) {
+      console.error("Customer profile completion error:", error);
+      res.status(500).json({ message: "Failed to complete profile" });
+    }
+  });
+
+  app.post("/api/profile/provider/complete", async (req, res) => {
+    try {
+      const { userId, profileData } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+      
+      // Parse profile data if it's a string (from multipart/form-data)
+      const parsedProfileData = typeof profileData === 'string' ? JSON.parse(profileData) : profileData;
+      
+      const user = await storage.completeProviderProfile(userId, parsedProfileData);
+      
+      res.json({ 
+        message: "Provider profile submitted for approval",
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          profileCompleted: user.profileCompleted
+        }
+      });
+    } catch (error) {
+      console.error("Provider profile completion error:", error);
+      res.status(500).json({ message: "Failed to complete profile" });
+    }
+  });
+
   // Admin routes
   app.get("/api/admin/providers/pending", async (req, res) => {
     try {
