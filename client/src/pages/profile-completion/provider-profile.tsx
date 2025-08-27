@@ -59,23 +59,11 @@ export default function ProviderProfile() {
 
   const profileMutation = useMutation({
     mutationFn: async (data: ProviderProfileCompletion) => {
-      const formData = new FormData();
-      formData.append('userId', userId || '');
-      formData.append('profileData', JSON.stringify(data));
-      
-      // Add documents to form data
-      documents.forEach((doc, index) => {
-        formData.append(`document_${index}`, doc);
+      // Use JSON format since file upload isn't implemented yet
+      const response = await apiRequest("POST", "/api/profile/provider/complete", {
+        userId: userId || '',
+        profileData: data
       });
-      
-      const response = await fetch("/api/profile/provider/complete", {
-        method: "POST",
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to submit profile");
-      }
       
       return response.json();
     },

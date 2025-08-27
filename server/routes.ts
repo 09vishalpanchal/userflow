@@ -532,7 +532,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/profile/provider/complete", async (req, res) => {
     try {
-      const { userId, profileData } = req.body;
+      // Handle both JSON and FormData formats
+      let userId, profileData;
+      
+      if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
+        // JSON format
+        ({ userId, profileData } = req.body);
+      } else {
+        // FormData format
+        userId = req.body.userId;
+        profileData = req.body.profileData;
+      }
       
       if (!userId) {
         return res.status(400).json({ message: "User ID is required" });
