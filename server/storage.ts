@@ -346,23 +346,34 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
 
-    // Create or update customer profile
-    await db
-      .insert(customerProfiles)
-      .values({
-        userId: userId,
-        location: profileData.location,
-        latitude: profileData.latitude?.toString(),
-        longitude: profileData.longitude?.toString()
-      })
-      .onConflictDoUpdate({
-        target: customerProfiles.userId,
-        set: {
+    // Check if customer profile already exists
+    const [existingProfile] = await db
+      .select()
+      .from(customerProfiles)
+      .where(eq(customerProfiles.userId, userId))
+      .limit(1);
+
+    if (existingProfile) {
+      // Update existing profile
+      await db
+        .update(customerProfiles)
+        .set({
           location: profileData.location,
           latitude: profileData.latitude?.toString(),
           longitude: profileData.longitude?.toString()
-        }
-      });
+        })
+        .where(eq(customerProfiles.userId, userId));
+    } else {
+      // Create new profile
+      await db
+        .insert(customerProfiles)
+        .values({
+          userId: userId,
+          location: profileData.location,
+          latitude: profileData.latitude?.toString(),
+          longitude: profileData.longitude?.toString()
+        });
+    }
 
     return user;
   }
@@ -380,25 +391,18 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
 
-    // Create or update provider profile
-    await db
-      .insert(providerProfiles)
-      .values({
-        userId: userId,
-        businessName: profileData.businessName,
-        businessDetails: profileData.businessDetails,
-        serviceCategories: profileData.serviceCategories,
-        location: profileData.location,
-        latitude: profileData.latitude?.toString(),
-        longitude: profileData.longitude?.toString(),
-        serviceRadius: profileData.serviceRadius,
-        status: 'pending',
-        documentsUploaded: profileData.documents?.length > 0 || false,
-        documents: profileData.documents || []
-      })
-      .onConflictDoUpdate({
-        target: providerProfiles.userId,
-        set: {
+    // Check if provider profile already exists
+    const [existingProfile] = await db
+      .select()
+      .from(providerProfiles)
+      .where(eq(providerProfiles.userId, userId))
+      .limit(1);
+
+    if (existingProfile) {
+      // Update existing profile
+      await db
+        .update(providerProfiles)
+        .set({
           businessName: profileData.businessName,
           businessDetails: profileData.businessDetails,
           serviceCategories: profileData.serviceCategories,
@@ -408,8 +412,26 @@ export class DatabaseStorage implements IStorage {
           serviceRadius: profileData.serviceRadius,
           documentsUploaded: profileData.documents?.length > 0 || false,
           documents: profileData.documents || []
-        }
-      });
+        })
+        .where(eq(providerProfiles.userId, userId));
+    } else {
+      // Create new profile
+      await db
+        .insert(providerProfiles)
+        .values({
+          userId: userId,
+          businessName: profileData.businessName,
+          businessDetails: profileData.businessDetails,
+          serviceCategories: profileData.serviceCategories,
+          location: profileData.location,
+          latitude: profileData.latitude?.toString(),
+          longitude: profileData.longitude?.toString(),
+          serviceRadius: profileData.serviceRadius,
+          status: 'pending',
+          documentsUploaded: profileData.documents?.length > 0 || false,
+          documents: profileData.documents || []
+        });
+    }
 
     return user;
   }

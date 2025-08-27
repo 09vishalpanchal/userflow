@@ -37,7 +37,7 @@ export const otpCodes = pgTable("otp_codes", {
 
 export const customerProfiles = pgTable("customer_profiles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").notNull().unique().references(() => users.id),
   location: text("location"),
   latitude: decimal("latitude", { precision: 10, scale: 8 }),
   longitude: decimal("longitude", { precision: 11, scale: 8 }),
@@ -45,7 +45,7 @@ export const customerProfiles = pgTable("customer_profiles", {
 
 export const providerProfiles = pgTable("provider_profiles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").notNull().unique().references(() => users.id),
   businessName: text("business_name"),
   businessDetails: text("business_details"),
   serviceCategories: text("service_categories").array(),
