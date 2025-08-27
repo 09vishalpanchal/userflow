@@ -12,30 +12,48 @@ import { FeaturedProviders } from "@/components/featured-providers";
 import { Testimonials } from "@/components/testimonials";
 import { MobileAppSection } from "@/components/mobile-app-section";
 import { Footer } from "@/components/footer";
+import LoginModal from "@/components/auth/login-modal";
+import RegisterModal from "@/components/auth/register-modal";
 
 export default function Home() {
   const [, setLocation] = useLocation();
   const [user, setUser] = useState<any>(null); // In a real app, this would come from auth context
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [defaultUserType, setDefaultUserType] = useState<"customer" | "provider">("customer");
 
   const handleSignIn = () => {
-    setLocation("/auth/login");
+    setShowLoginModal(true);
   };
 
   const handleGetStarted = () => {
-    setLocation("/auth/register");
+    setDefaultUserType("customer");
+    setShowRegisterModal(true);
   };
 
   const handleCustomerSignup = () => {
-    setLocation("/auth/register?type=customer");
+    setDefaultUserType("customer");
+    setShowRegisterModal(true);
   };
 
   const handleProviderSignup = () => {
-    setLocation("/auth/register?type=provider");
+    setDefaultUserType("provider");
+    setShowRegisterModal(true);
   };
 
   const handleSignOut = () => {
     setUser(null);
     // Clear auth state
+  };
+
+  const handleSwitchToRegister = () => {
+    setShowLoginModal(false);
+    setShowRegisterModal(true);
+  };
+
+  const handleSwitchToLogin = () => {
+    setShowRegisterModal(false);
+    setShowLoginModal(true);
   };
 
   return (
@@ -63,6 +81,19 @@ export default function Home() {
       </main>
       
       <Footer />
+
+      {/* Auth Modals */}
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={() => setShowLoginModal(false)}
+        onSwitchToRegister={handleSwitchToRegister}
+      />
+      <RegisterModal 
+        isOpen={showRegisterModal} 
+        onClose={() => setShowRegisterModal(false)}
+        onSwitchToLogin={handleSwitchToLogin}
+        defaultUserType={defaultUserType}
+      />
     </div>
   );
 }
