@@ -58,7 +58,8 @@ export default function UnifiedAuthModal({ isOpen, onClose }: UnifiedAuthModalPr
         const response = await apiRequest("POST", "/api/auth/login", { phoneNumber });
         return { exists: true, data: await response.json() };
       } catch (error: any) {
-        if (error.message === "User not found") {
+        // If user not found, this is a new user
+        if (error.message?.includes("User not found") || error.message?.includes("404")) {
           return { exists: false };
         }
         throw error;
