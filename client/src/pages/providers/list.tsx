@@ -36,7 +36,7 @@ export default function ProvidersList() {
   
   const [filters, setFilters] = useState<FilterState>({
     search: urlParams.get('search') || '',
-    location: urlParams.get('location') || '',
+    location: urlParams.get('location') || 'all',
     categories: urlParams.getAll('category'),
     rating: urlParams.get('rating') ? [parseInt(urlParams.get('rating')!)] : [0],
     priceRange: urlParams.get('minPrice') && urlParams.get('maxPrice') 
@@ -107,7 +107,7 @@ export default function ProvidersList() {
   const clearFilters = () => {
     const cleared = {
       search: '',
-      location: '',
+      location: 'all',
       categories: [],
       rating: [0],
       priceRange: [0, 5000],
@@ -157,7 +157,7 @@ export default function ProvidersList() {
             <SelectValue placeholder="Select location" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Locations</SelectItem>
+            <SelectItem value="all">All Locations</SelectItem>
             {locations.map((loc) => (
               <SelectItem key={loc} value={loc}>{loc}</SelectItem>
             ))}

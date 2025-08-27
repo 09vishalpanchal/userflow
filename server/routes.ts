@@ -1106,7 +1106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Location filter
-        if (location && provider.location !== location) {
+        if (location && location !== 'all' && provider.location !== location) {
           return false;
         }
         
