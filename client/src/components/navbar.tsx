@@ -21,10 +21,10 @@ export function Navbar({ user, onSignIn, onGetStarted, onSignOut }: NavbarProps)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems = [
-    { href: "#services", label: "Services" },
-    { href: "#how-it-works", label: "How It Works" },
-    { href: "#providers", label: "Providers" },
-    { href: "#about", label: "About" },
+    { href: "/browse-jobs", label: "Services" },
+    { href: "/how-it-works", label: "How It Works" },
+    { href: "/join-as-provider", label: "Providers" },
+    { href: "/about-us", label: "About" },
   ];
 
   const getDashboardLink = () => {
@@ -55,14 +55,14 @@ export function Navbar({ user, onSignIn, onGetStarted, onSignOut }: NavbarProps)
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-4">
               {navItems.map((item) => (
-                <a
+                <Link
                   key={item.href}
                   href={item.href}
                   className="text-muted-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors"
                   data-testid={`link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                 >
                   {item.label}
-                </a>
+                </Link>
               ))}
             </div>
           </div>
@@ -124,7 +124,7 @@ export function Navbar({ user, onSignIn, onGetStarted, onSignOut }: NavbarProps)
           <div className="md:hidden pb-4" data-testid="mobile-menu">
             <div className="space-y-2">
               {navItems.map((item) => (
-                <a
+                <Link
                   key={item.href}
                   href={item.href}
                   className="block text-muted-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium"
@@ -132,7 +132,7 @@ export function Navbar({ user, onSignIn, onGetStarted, onSignOut }: NavbarProps)
                   data-testid={`mobile-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                 >
                   {item.label}
-                </a>
+                </Link>
               ))}
             </div>
           </div>

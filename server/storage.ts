@@ -243,7 +243,10 @@ export class DatabaseStorage implements IStorage {
 
   // Duplicate method removed - getJob already exists with same functionality
 
-  // Duplicate method removed - getAllJobs already exists above
+  async getAllJobs(): Promise<Job[]> {
+    const allJobs = await db.select().from(jobs).orderBy(desc(jobs.createdAt));
+    return allJobs;
+  }
 
   async getJobsNearLocation(latitude: number, longitude: number, radiusKm: number): Promise<Job[]> {
     // Using Haversine formula to calculate distance

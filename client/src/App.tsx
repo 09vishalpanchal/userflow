@@ -25,10 +25,10 @@ import ProviderProfileCompletion from "@/pages/profile-completion/provider-profi
 // Phase 1 Public Pages - Lazy loaded for better SEO
 const BrowseJobs = lazy(() => import("@/pages/browse-jobs"));
 const JobDetails = lazy(() => import("@/pages/job-details"));
-const HowItWorksPage = lazy(() => import("@/pages/how-it-works-page"));
+const HowItWorksPage = lazy(() => import("@/pages/how-it-works"));
 const JoinAsProvider = lazy(() => import("@/pages/join-as-provider"));
 const ProviderProfilePage = lazy(() => import("@/pages/provider-profile-page"));
-const About = lazy(() => import("@/pages/about"));
+const About = lazy(() => import("@/pages/about-us"));
 const Contact = lazy(() => import("@/pages/contact"));
 const FAQ = lazy(() => import("@/pages/faq"));
 const Blog = lazy(() => import("@/pages/blog"));
@@ -64,7 +64,7 @@ function Router() {
         <Route path="/post-job" component={PostJob} />
         <Route path="/join-as-provider" component={JoinAsProvider} />
         <Route path="/provider/:providerId" component={ProviderProfilePage} />
-        <Route path="/about" component={About} />
+        <Route path="/about-us" component={About} />
         <Route path="/contact" component={Contact} />
         <Route path="/faq" component={FAQ} />
         <Route path="/blog" component={Blog} />
