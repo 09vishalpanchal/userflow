@@ -82,7 +82,7 @@ export default function AdminDashboard() {
   });
 
   const pendingProviders: ProviderProfile[] = (pendingData as any)?.providers || [];
-  const pendingUsers = pendingUsersData?.users || [];
+  const pendingUsers = (pendingUsersData as any)?.users || [];
   
   // Enhanced dashboard stats
   const stats = (dashboardData as any)?.stats || {
@@ -421,7 +421,7 @@ export default function AdminDashboard() {
                   </Card>
                 ) : (
                   <div className="space-y-3">
-                    {pendingUsers.map((user) => (
+                    {pendingUsers.map((user: any) => (
                       <Card key={user.id} className="hover:shadow-md transition-shadow" data-testid={`card-user-${user.id}`}>
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between">

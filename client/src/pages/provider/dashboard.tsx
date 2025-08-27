@@ -43,7 +43,7 @@ export default function ProviderDashboard() {
     enabled: !!user.id,
   });
 
-  const profile: ProviderProfile = profileData?.profile || { status: "pending", serviceRadius: 5, maxServiceRadius: 20 };
+  const profile: ProviderProfile = (profileData as any)?.profile || { status: "pending", serviceRadius: 5, maxServiceRadius: 20 };
 
   // Get wallet information
   const { data: walletData, isLoading: walletLoading } = useQuery({
@@ -57,8 +57,8 @@ export default function ProviderDashboard() {
     enabled: profile.status === "approved",
   });
 
-  const jobs: Job[] = jobsData?.jobs || [];
-  const wallet = walletData?.wallet;
+  const jobs: Job[] = (jobsData as any)?.jobs || [];
+  const wallet = (walletData as any)?.wallet;
   const balance = wallet ? parseFloat(wallet.balance) : 0;
   const unlockPrice = 100; // ₹100 per unlock
 
