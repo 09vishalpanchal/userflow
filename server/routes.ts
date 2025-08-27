@@ -430,7 +430,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin routes
+  // Enhanced Admin routes
+  app.get("/api/admin/dashboard", async (req, res) => {
+    try {
+      const stats = await storage.getDashboardStats();
+      res.json({ stats });
+    } catch (error) {
+      console.error("Dashboard stats error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/admin/actions/recent", async (req, res) => {
+    try {
+      const actions = await storage.getRecentAdminActions();
+      res.json({ actions });
+    } catch (error) {
+      console.error("Recent actions error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.get("/api/admin/providers/pending", async (req, res) => {
     try {
       const providers = await storage.getPendingProviders();
@@ -440,9 +460,155 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/admin/users", async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json({ users });
+    } catch (error) {
+      console.error("Get users error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/admin/jobs", async (req, res) => {
+    try {
+      const jobs = await storage.getAllJobs();
+      res.json({ jobs });
+    } catch (error) {
+      console.error("Get jobs error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/admin/wallets", async (req, res) => {
+    try {
+      const wallets = await storage.getAllWallets();
+      res.json({ wallets });
+    } catch (error) {
+      console.error("Get wallets error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/admin/transactions", async (req, res) => {
+    try {
+      const transactions = await storage.getAllTransactions();
+      res.json({ transactions });
+    } catch (error) {
+      console.error("Get transactions error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/admin/settings", async (req, res) => {
+    try {
+      const settings = await storage.getGlobalSettings();
+      res.json({ settings });
+    } catch (error) {
+      console.error("Get settings error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/admin/settings", async (req, res) => {
+    try {
+      const { key, value, category, adminId } = req.body;
+      
+      if (!key || !value || !category || !adminId) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      
+      await storage.updateGlobalSettings(key, value, category, adminId);
+      await storage.createAdminActionLog(adminId, `Updated setting: ${key}`, key, 'setting');
+      
+      res.json({ message: "Settings updated successfully" });
+    } catch (error) {
+      console.error("Update settings error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/admin/notifications/send", async (req, res) => {
+    try {
+      const { userId, title, message, type, adminId } = req.body;
+      
+      if (!userId || !title || !message || !type) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      
+      await storage.sendNotification(userId, title, message, type);
+      
+      if (adminId) {
+        await storage.createAdminActionLog(adminId, `Sent notification: ${title}`, userId, 'notification');
+      }
+      
+      res.json({ message: "Notification sent successfully" });
+    } catch (error) {
+      console.error("Send notification error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/admin/notifications", async (req, res) => {
+    try {
+      const { userId } = req.query;
+      const notifications = await storage.getAllNotifications(userId as string);
+      res.json({ notifications });
+    } catch (error) {
+      console.error("Get notifications error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/admin/wallet/add-balance", async (req, res) => {
+    try {
+      const { providerId, amount, adminId } = req.body;
+      
+      if (!providerId || !amount || !adminId) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      
+      const currentWallet = await storage.getWallet(providerId);
+      if (!currentWallet) {
+        return res.status(404).json({ message: "Wallet not found" });
+      }
+      
+      const newBalance = (parseFloat(currentWallet.balance) + parseFloat(amount)).toString();
+      await storage.updateWalletBalance(providerId, newBalance);
+      
+      // Create transaction record
+      await storage.createTransaction({
+        walletId: currentWallet.id,
+        type: 'recharge',
+        amount: amount,
+        description: `Admin balance addition by ${adminId}`
+      });
+      
+      await storage.createAdminActionLog(adminId, `Added ₹${amount} to provider wallet`, providerId, 'wallet');
+      
+      res.json({ message: "Balance added successfully", newBalance });
+    } catch (error) {
+      console.error("Add balance error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.post("/api/admin/providers/:userId/approve", async (req, res) => {
     try {
+      const { adminId } = req.body;
       await storage.approveProvider(req.params.userId);
+      
+      if (adminId) {
+        await storage.createAdminActionLog(adminId, "Approved provider", req.params.userId, 'provider');
+        // Send approval notification
+        await storage.sendNotification(
+          req.params.userId,
+          "Profile Approved!",
+          "Your service provider profile has been approved. You can now start receiving job requests.",
+          "approval"
+        );
+      }
+      
       res.json({ message: "Provider approved successfully" });
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
@@ -451,7 +617,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/providers/:userId/reject", async (req, res) => {
     try {
+      const { adminId, reason } = req.body;
       await storage.rejectProvider(req.params.userId);
+      
+      if (adminId) {
+        await storage.createAdminActionLog(adminId, "Rejected provider", req.params.userId, 'provider', reason);
+        // Send rejection notification
+        await storage.sendNotification(
+          req.params.userId,
+          "Profile Rejected",
+          `Your service provider application has been rejected. ${reason || 'Please review and resubmit with correct information.'}`,
+          "rejection"
+        );
+      }
+      
       res.json({ message: "Provider rejected successfully" });
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
@@ -460,7 +639,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/users/:userId/block", async (req, res) => {
     try {
+      const { adminId, reason } = req.body;
       await storage.updateUser(req.params.userId, { isBlocked: true });
+      
+      if (adminId) {
+        await storage.createAdminActionLog(adminId, "Blocked user", req.params.userId, 'user', reason);
+        // Send block notification
+        await storage.sendNotification(
+          req.params.userId,
+          "Account Blocked",
+          `Your account has been temporarily blocked. ${reason || 'Please contact support for more information.'}`,
+          "block"
+        );
+      }
+      
       res.json({ message: "User blocked successfully" });
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
@@ -469,7 +661,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/users/:userId/unblock", async (req, res) => {
     try {
+      const { adminId } = req.body;
       await storage.updateUser(req.params.userId, { isBlocked: false });
+      
+      if (adminId) {
+        await storage.createAdminActionLog(adminId, "Unblocked user", req.params.userId, 'user');
+        // Send unblock notification
+        await storage.sendNotification(
+          req.params.userId,
+          "Account Restored",
+          "Your account has been restored. You can now access all platform features.",
+          "unblock"
+        );
+      }
+      
       res.json({ message: "User unblocked successfully" });
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });

@@ -7,6 +7,9 @@ import {
   wallets, 
   transactions, 
   jobUnlocks,
+  adminSettings,
+  notifications,
+  adminActionLogs,
   type User, 
   type InsertUser,
   type OtpCode,
@@ -22,7 +25,13 @@ import {
   type Transaction,
   type InsertTransaction,
   type JobUnlock,
-  type InsertJobUnlock
+  type InsertJobUnlock,
+  type AdminSetting,
+  type InsertAdminSetting,
+  type Notification,
+  type InsertNotification,
+  type AdminActionLog,
+  type InsertAdminActionLog
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, sql, desc, asc } from "drizzle-orm";
@@ -75,6 +84,19 @@ export interface IStorage {
   getJobUnlocks(jobId: string): Promise<JobUnlock[]>;
   hasProviderUnlockedJob(jobId: string, providerId: string): Promise<boolean>;
   incrementJobUnlockCount(jobId: string): Promise<void>;
+  
+  // Admin methods
+  getDashboardStats(): Promise<any>;
+  getAllUsers(): Promise<User[]>;
+  getAllJobs(): Promise<Job[]>;
+  getAllWallets(): Promise<Wallet[]>;
+  getAllTransactions(): Promise<Transaction[]>;
+  getRecentAdminActions(): Promise<any[]>;
+  createAdminActionLog(adminId: string, action: string, targetId?: string, targetType?: string, details?: string): Promise<void>;
+  updateGlobalSettings(key: string, value: string, category: string, adminId: string): Promise<void>;
+  getGlobalSettings(): Promise<any[]>;
+  sendNotification(userId: string, title: string, message: string, type: string): Promise<void>;
+  getAllNotifications(userId?: string): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -363,6 +385,108 @@ export class DatabaseStorage implements IStorage {
       });
 
     return user;
+  }
+
+  // Admin methods
+  async getDashboardStats(): Promise<any> {
+    const totalUsers = await db.select({ count: sql<number>`count(*)` }).from(users);
+    const activeProviders = await db.select({ count: sql<number>`count(*)` }).from(providerProfiles).where(eq(providerProfiles.status, 'approved'));
+    const totalJobs = await db.select({ count: sql<number>`count(*)` }).from(jobs);
+    const monthlyRevenue = await db.select({ sum: sql<number>`sum(amount::numeric)` }).from(transactions).where(eq(transactions.type, 'unlock'));
+    const pendingProviders = await db.select({ count: sql<number>`count(*)` }).from(providerProfiles).where(eq(providerProfiles.status, 'pending'));
+
+    return {
+      totalUsers: totalUsers[0]?.count || 0,
+      activeProviders: activeProviders[0]?.count || 0,
+      totalJobs: totalJobs[0]?.count || 0,
+      monthlyRevenue: monthlyRevenue[0]?.sum || 0,
+      pendingApprovals: pendingProviders[0]?.count || 0
+    };
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getAllJobs(): Promise<Job[]> {
+    return await db.select().from(jobs).orderBy(desc(jobs.createdAt));
+  }
+
+  async getAllWallets(): Promise<Wallet[]> {
+    return await db.select().from(wallets).orderBy(desc(wallets.lastRechargeAt));
+  }
+
+  async getAllTransactions(): Promise<Transaction[]> {
+    return await db.select().from(transactions).orderBy(desc(transactions.createdAt));
+  }
+
+  async getRecentAdminActions(): Promise<any[]> {
+    return await db
+      .select({
+        id: adminActionLogs.id,
+        action: adminActionLogs.action,
+        targetId: adminActionLogs.targetId,
+        targetType: adminActionLogs.targetType,
+        details: adminActionLogs.details,
+        createdAt: adminActionLogs.createdAt,
+        adminName: users.name
+      })
+      .from(adminActionLogs)
+      .leftJoin(users, eq(adminActionLogs.adminId, users.id))
+      .orderBy(desc(adminActionLogs.createdAt))
+      .limit(10);
+  }
+
+  async createAdminActionLog(adminId: string, action: string, targetId?: string, targetType?: string, details?: string): Promise<void> {
+    await db.insert(adminActionLogs).values({
+      adminId,
+      action,
+      targetId,
+      targetType,
+      details
+    });
+  }
+
+  async updateGlobalSettings(key: string, value: string, category: string, adminId: string): Promise<void> {
+    await db
+      .insert(adminSettings)
+      .values({
+        settingKey: key,
+        settingValue: value,
+        category,
+        updatedBy: adminId
+      })
+      .onConflictDoUpdate({
+        target: adminSettings.settingKey,
+        set: {
+          settingValue: value,
+          updatedBy: adminId,
+          updatedAt: sql`now()`
+        }
+      });
+  }
+
+  async getGlobalSettings(): Promise<any[]> {
+    return await db.select().from(adminSettings).orderBy(adminSettings.category, adminSettings.settingKey);
+  }
+
+  async sendNotification(userId: string, title: string, message: string, type: string): Promise<void> {
+    await db.insert(notifications).values({
+      userId,
+      title,
+      message,
+      type
+    });
+  }
+
+  async getAllNotifications(userId?: string): Promise<any[]> {
+    const query = db.select().from(notifications);
+    
+    if (userId) {
+      return await query.where(eq(notifications.userId, userId)).orderBy(desc(notifications.createdAt));
+    }
+    
+    return await query.orderBy(desc(notifications.createdAt)).limit(50);
   }
 }
 

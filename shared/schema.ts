@@ -101,6 +101,39 @@ export const jobUnlocks = pgTable("job_unlocks", {
   unlockedAt: timestamp("unlocked_at").defaultNow(),
 });
 
+// Admin Settings Table
+export const adminSettings = pgTable("admin_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  settingKey: text("setting_key").notNull().unique(),
+  settingValue: text("setting_value").notNull(),
+  category: text("category").notNull(), // pricing, notifications, etc
+  description: text("description"),
+  updatedBy: varchar("updated_by").references(() => users.id),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Notifications Table
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  type: text("type").notNull(), // approval, rejection, unlock_success, low_balance, manual
+  isRead: boolean("is_read").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Admin Actions Log
+export const adminActionLogs = pgTable("admin_action_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  adminId: varchar("admin_id").notNull().references(() => users.id),
+  action: text("action").notNull(), // approve_provider, block_user, add_balance, etc
+  targetId: varchar("target_id"), // user id, job id, etc
+  targetType: text("target_type"), // user, job, wallet, etc
+  details: text("details"), // additional context as JSON string
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   customerProfile: one(customerProfiles, {
@@ -171,6 +204,20 @@ export const jobUnlocksRelations = relations(jobUnlocks, ({ one }) => ({
   }),
 }));
 
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+}));
+
+export const adminActionLogsRelations = relations(adminActionLogs, ({ one }) => ({
+  admin: one(users, {
+    fields: [adminActionLogs.adminId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -212,6 +259,21 @@ export const insertJobUnlockSchema = createInsertSchema(jobUnlocks).omit({
   unlockedAt: true,
 });
 
+export const insertAdminSettingSchema = createInsertSchema(adminSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAdminActionLogSchema = createInsertSchema(adminActionLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -229,6 +291,12 @@ export type Transaction = typeof transactions.$inferSelect;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type JobUnlock = typeof jobUnlocks.$inferSelect;
 export type InsertJobUnlock = z.infer<typeof insertJobUnlockSchema>;
+export type AdminSetting = typeof adminSettings.$inferSelect;
+export type InsertAdminSetting = z.infer<typeof insertAdminSettingSchema>;
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type AdminActionLog = typeof adminActionLogs.$inferSelect;
+export type InsertAdminActionLog = z.infer<typeof insertAdminActionLogSchema>;
 
 // Profile completion schemas
 export const customerProfileCompletionSchema = z.object({
