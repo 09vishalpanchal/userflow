@@ -30,7 +30,7 @@ type JobFormData = z.infer<typeof jobSchema>;
 export default function PostJob() {
   const [, setLocation] = useLocation();
   const [isGettingLocation, setIsGettingLocation] = useState(false);
-  const [user] = useState({ id: "user-1" }); // This would come from auth context
+  const [user] = useState({ id: "36e9478b-1381-4fd8-8342-0d1905343017" }); // Using actual logged-in user ID
   const { toast } = useToast();
 
   const { data: categoriesData } = useQuery({

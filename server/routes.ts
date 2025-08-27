@@ -222,14 +222,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Job routes
   app.post("/api/jobs", async (req, res) => {
     try {
+      console.log("Raw job data received:", req.body);
       const jobData = insertJobSchema.parse(req.body);
+      console.log("Parsed job data:", jobData);
       const job = await storage.createJob(jobData);
       
       // TODO: Send notifications to nearby providers
       
       res.json({ job });
     } catch (error) {
-      res.status(400).json({ message: "Invalid job data" });
+      console.error("Job creation error:", error);
+      if (error instanceof z.ZodError) {
+        console.error("Validation errors:", error.errors);
+        res.status(400).json({ 
+          message: "Invalid job data", 
+          errors: error.errors 
+        });
+      } else {
+        res.status(400).json({ message: "Invalid job data" });
+      }
     }
   });
 
