@@ -1,29 +1,31 @@
+import { Link } from "wouter";
+
 export function Footer() {
   const customerLinks = [
-    { href: "#", label: "Browse Services" },
-    { href: "#", label: "Book Now" },
-    { href: "#", label: "Track Orders" },
-    { href: "#", label: "Customer Support" },
+    { href: "/browse-jobs", label: "Browse Services" },
+    { href: "/customer/post-job", label: "Post a Job" },
+    { href: "/how-it-works", label: "How It Works" },
+    { href: "/contact", label: "Customer Support" },
   ];
 
   const providerLinks = [
-    { href: "#", label: "Join as Provider" },
-    { href: "#", label: "Provider Dashboard" },
-    { href: "#", label: "Resources" },
-    { href: "#", label: "Provider Support" },
+    { href: "/join-as-provider", label: "Join as Provider" },
+    { href: "/provider/dashboard", label: "Provider Dashboard" },
+    { href: "/blog", label: "Resources" },
+    { href: "/faq", label: "Provider Support" },
   ];
 
   const companyLinks = [
-    { href: "#", label: "About Us" },
-    { href: "#", label: "Careers" },
-    { href: "#", label: "Press" },
-    { href: "#", label: "Contact" },
+    { href: "/about-us", label: "About Us" },
+    { href: "/blog", label: "Blog" },
+    { href: "/faq", label: "FAQ" },
+    { href: "/contact", label: "Contact" },
   ];
 
   const legalLinks = [
-    { href: "#", label: "Privacy Policy" },
-    { href: "#", label: "Terms of Service" },
-    { href: "#", label: "Cookie Policy" },
+    { href: "/privacy", label: "Privacy Policy" },
+    { href: "/terms", label: "Terms of Service" },
+    { href: "/contact", label: "Support" },
   ];
 
   return (
@@ -56,9 +58,9 @@ export function Footer() {
             <ul className="space-y-2 text-muted-foreground">
               {customerLinks.map((link, index) => (
                 <li key={index}>
-                  <a href={link.href} className="hover:text-primary" data-testid={`link-customer-${index}`}>
+                  <Link href={link.href} className="hover:text-primary" data-testid={`link-customer-${index}`}>
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -69,9 +71,9 @@ export function Footer() {
             <ul className="space-y-2 text-muted-foreground">
               {providerLinks.map((link, index) => (
                 <li key={index}>
-                  <a href={link.href} className="hover:text-primary" data-testid={`link-provider-${index}`}>
+                  <Link href={link.href} className="hover:text-primary" data-testid={`link-provider-${index}`}>
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -82,9 +84,9 @@ export function Footer() {
             <ul className="space-y-2 text-muted-foreground">
               {companyLinks.map((link, index) => (
                 <li key={index}>
-                  <a href={link.href} className="hover:text-primary" data-testid={`link-company-${index}`}>
+                  <Link href={link.href} className="hover:text-primary" data-testid={`link-company-${index}`}>
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -98,9 +100,9 @@ export function Footer() {
             </p>
             <div className="flex space-x-6 text-sm text-muted-foreground mt-4 md:mt-0" data-testid="legal-links">
               {legalLinks.map((link, index) => (
-                <a key={index} href={link.href} className="hover:text-primary" data-testid={`link-legal-${index}`}>
+                <Link key={index} href={link.href} className="hover:text-primary" data-testid={`link-legal-${index}`}>
                   {link.label}
-                </a>
+                </Link>
               ))}
             </div>
           </div>

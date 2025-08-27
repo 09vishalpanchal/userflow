@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
 import { Users, Award, Target, Heart } from "lucide-react";
 import { useState } from "react";
 
@@ -187,6 +188,8 @@ export default function AboutUs() {
           </div>
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 }

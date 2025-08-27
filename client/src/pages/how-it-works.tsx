@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
 import { Search, UserCheck, MessageSquare, CheckCircle, Plus, Star, CreditCard } from "lucide-react";
 import { useState } from "react";
 
@@ -306,6 +307,8 @@ export default function HowItWorks() {
           </div>
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 }
