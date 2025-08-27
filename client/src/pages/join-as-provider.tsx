@@ -267,7 +267,7 @@ export default function JoinAsProvider() {
             <Button 
               size="lg"
               variant="outline"
-              onClick={() => setLocation("/browse-jobs")}
+              onClick={() => setLocation("/jobs/list")}
               data-testid="browse-jobs-cta"
             >
               Browse Available Jobs

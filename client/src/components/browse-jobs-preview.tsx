@@ -94,7 +94,7 @@ export function BrowseJobsPreview() {
         <div className="text-center">
           <Button 
             size="lg"
-            onClick={() => setLocation("/browse-jobs")}
+            onClick={() => setLocation("/jobs/list")}
             className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-lg font-semibold transition-colors"
             data-testid="view-all-jobs-cta"
           >

@@ -23,7 +23,7 @@ export function MobileAppLayout({ children, user, onAuthRequired }: MobileAppLay
   
   const bottomNavItems = [
     { href: "/", label: "Home", icon: Home },
-    { href: "/browse-jobs", label: "Search", icon: Search },
+    { href: "/jobs/list", label: "Search", icon: Search },
     { href: "/post-job", label: "Post", icon: Plus, authRequired: true },
     { href: "/messages", label: "Messages", icon: MessageCircle, authRequired: true, badge: 0 },
     { href: user ? (user.userType === 'customer' ? '/customer/dashboard' : user.userType === 'provider' ? '/provider/dashboard' : '/admin/dashboard') : '/profile', label: "Profile", icon: User },

@@ -23,7 +23,6 @@ import CustomerProfileCompletion from "@/pages/profile-completion/customer-profi
 import ProviderProfileCompletion from "@/pages/profile-completion/provider-profile";
 
 // Phase 1 Public Pages - Lazy loaded for better SEO
-const BrowseJobs = lazy(() => import("@/pages/browse-jobs"));
 const JobDetails = lazy(() => import("@/pages/job-details"));
 const HowItWorksPage = lazy(() => import("@/pages/how-it-works"));
 const JoinAsProvider = lazy(() => import("@/pages/join-as-provider"));
@@ -58,8 +57,8 @@ function Router() {
         <Route path="/profile/provider" component={ProviderProfileCompletion} />
         
         {/* Public Pages */}
-        <Route path="/browse-jobs" component={BrowseJobs} />
-        <Route path="/jobs/:city/:category" component={BrowseJobs} />
+        <Route path="/browse-jobs" component={lazy(() => import("@/pages/jobs/list"))} />
+        <Route path="/jobs/:city/:category" component={lazy(() => import("@/pages/jobs/list"))} />
         <Route path="/providers/list" component={lazy(() => import("@/pages/providers/list"))} />
         <Route path="/jobs/list" component={lazy(() => import("@/pages/jobs/list"))} />
         <Route path="/job/:jobId" component={JobDetails} />

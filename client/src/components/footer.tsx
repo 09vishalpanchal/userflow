@@ -2,7 +2,7 @@ import { Link } from "wouter";
 
 export function Footer() {
   const customerLinks = [
-    { href: "/browse-jobs", label: "Browse Services" },
+    { href: "/jobs/list", label: "Browse Services" },
     { href: "/customer/post-job", label: "Post a Job" },
     { href: "/how-it-works", label: "How It Works" },
     { href: "/contact", label: "Customer Support" },

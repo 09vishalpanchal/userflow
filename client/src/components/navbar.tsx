@@ -21,9 +21,8 @@ export function Navbar({ user, onSignIn, onGetStarted, onSignOut }: NavbarProps)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems = [
-    { href: "/browse-jobs", label: "Services" },
-    { href: "/providers/list", label: "Providers" },
     { href: "/jobs/list", label: "Jobs" },
+    { href: "/providers/list", label: "Providers" },
     { href: "/how-it-works", label: "How It Works" },
     { href: "/about-us", label: "About" },
   ];

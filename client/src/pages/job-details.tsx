@@ -77,7 +77,7 @@ export default function JobDetails() {
         {/* Back Button */}
         <Button 
           variant="ghost" 
-          onClick={() => setLocation("/browse-jobs")}
+          onClick={() => setLocation("/jobs/list")}
           className="mb-6"
           data-testid="back-button"
         >
@@ -236,7 +236,7 @@ export default function JobDetails() {
                 <Button 
                   variant="link" 
                   className="w-full mt-4 p-0"
-                  onClick={() => setLocation("/browse-jobs")}
+                  onClick={() => setLocation("/jobs/list")}
                   data-testid="view-all-jobs"
                 >
                   View All Jobs

@@ -125,7 +125,7 @@ export function SearchAutocomplete({
         onSearch(searchTerm, locationQuery);
       } else {
         // Default navigation to browse jobs with search
-        setLocation(`/browse-jobs?search=${encodeURIComponent(searchTerm)}&location=${encodeURIComponent(locationQuery)}`);
+        setLocation(`/jobs/list?search=${encodeURIComponent(searchTerm)}&location=${encodeURIComponent(locationQuery)}`);
       }
       
       setIsSearchOpen(false);

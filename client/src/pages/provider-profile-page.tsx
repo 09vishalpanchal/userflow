@@ -114,7 +114,7 @@ export default function ProviderProfilePage() {
         {/* Back Button */}
         <Button 
           variant="ghost" 
-          onClick={() => setLocation("/browse-jobs")}
+          onClick={() => setLocation("/jobs/list")}
           className="mb-6"
           data-testid="back-button"
         >
