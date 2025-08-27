@@ -46,8 +46,11 @@ export function Navbar({ user, onSignIn, onGetStarted, onSignOut }: NavbarProps)
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <Link href="/" data-testid="link-home">
-              <h1 className="text-xl font-bold text-primary">ServiceConnect</h1>
+            <Link href="/" data-testid="link-home" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">JC</span>
+              </div>
+              <h1 className="text-xl font-bold text-primary">JC Bid</h1>
             </Link>
           </div>
           

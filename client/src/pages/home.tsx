@@ -12,6 +12,7 @@ import { FeaturedProviders } from "@/components/featured-providers";
 import { Testimonials } from "@/components/testimonials";
 import { MobileAppSection } from "@/components/mobile-app-section";
 import { Footer } from "@/components/footer";
+import { MobileAppLayout } from "@/components/layout/mobile-app-layout";
 import UnifiedAuthModal from "@/components/auth/unified-auth-modal";
 
 export default function Home() {
@@ -41,30 +42,53 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background" data-testid="home-page">
-      <Navbar 
-        user={user}
-        onSignIn={handleSignIn}
-        onGetStarted={handleGetStarted}
-        onSignOut={handleSignOut}
-      />
-      
-      <main>
-        <HeroSection 
-          onCustomerSignup={handleCustomerSignup}
-          onProviderSignup={handleProviderSignup}
+    <div data-testid="home-page">
+      {/* Desktop Layout */}
+      <div className="hidden lg:block min-h-screen bg-background">
+        <Navbar 
+          user={user}
+          onSignIn={handleSignIn}
+          onGetStarted={handleGetStarted}
+          onSignOut={handleSignOut}
         />
-        <ServiceCategories />
-        <NewNoteworthy />
-        <FeaturedServices />
-        <CategorySpecificSections />
-        <BrowseJobsPreview />
-        <FeaturedProviders />
-        <Testimonials />
-        <MobileAppSection />
-      </main>
-      
-      <Footer />
+        
+        <main>
+          <HeroSection 
+            onCustomerSignup={handleCustomerSignup}
+            onProviderSignup={handleProviderSignup}
+          />
+          <ServiceCategories />
+          <NewNoteworthy />
+          <FeaturedServices />
+          <CategorySpecificSections />
+          <BrowseJobsPreview />
+          <FeaturedProviders />
+          <Testimonials />
+          <MobileAppSection />
+        </main>
+        
+        <Footer />
+      </div>
+
+      {/* Mobile/Tablet App Layout */}
+      <div className="lg:hidden">
+        <MobileAppLayout user={user} onAuthRequired={handleSignIn}>
+          <main>
+            <HeroSection 
+              onCustomerSignup={handleCustomerSignup}
+              onProviderSignup={handleProviderSignup}
+            />
+            <ServiceCategories />
+            <NewNoteworthy />
+            <FeaturedServices />
+            <CategorySpecificSections />
+            <BrowseJobsPreview />
+            <FeaturedProviders />
+            <Testimonials />
+            <MobileAppSection />
+          </main>
+        </MobileAppLayout>
+      </div>
 
       {/* Auth Modal */}
       <UnifiedAuthModal 

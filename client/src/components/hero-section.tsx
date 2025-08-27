@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, MapPin, Star, Users } from "lucide-react";
+import { SearchAutocomplete } from "@/components/search/search-autocomplete";
 
 interface HeroSectionProps {
   onCustomerSignup: () => void;
@@ -22,38 +23,9 @@ export function HeroSection({ onCustomerSignup, onProviderSignup }: HeroSectionP
           </h1>
           
           {/* Search Section */}
-          <div className="max-w-lg mx-auto mb-8">
+          <div className="max-w-2xl mx-auto mb-8">
             <p className="text-lg text-gray-600 mb-6">What are you looking for?</p>
-            
-            <div className="flex gap-2">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <Input 
-                  type="text"
-                  placeholder="Search for services..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 py-3 rounded-lg border-2 border-gray-200 focus:border-primary"
-                  data-testid="input-search"
-                />
-              </div>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <Input 
-                  type="text"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  className="pl-10 py-3 w-32 rounded-lg border-2 border-gray-200 focus:border-primary"
-                  data-testid="input-location"
-                />
-              </div>
-              <Button 
-                className="px-6 py-3 bg-primary hover:bg-primary/90 rounded-lg"
-                data-testid="button-search"
-              >
-                Search
-              </Button>
-            </div>
+            <SearchAutocomplete />
           </div>
 
           {/* Statistics */}
