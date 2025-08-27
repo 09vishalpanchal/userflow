@@ -59,11 +59,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await storage.markOtpAsUsed(otp.id);
 
-      // Create user
+      // Create user (requires admin approval)
       const user = await storage.createUser({
         phoneNumber,
         userType,
-        isVerified: true
+        isVerified: true,
+        isApproved: false // Requires admin approval
       });
 
       // Create wallet for providers
@@ -75,12 +76,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json({ 
-        message: "Phone verified successfully",
+        message: "Phone verified successfully. Your account is pending admin approval.",
         user: {
           id: user.id,
           phoneNumber: user.phoneNumber,
           userType: user.userType,
-          isVerified: user.isVerified
+          isVerified: user.isVerified,
+          isApproved: user.isApproved
         }
       });
     } catch (error) {
@@ -101,6 +103,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (user.isBlocked) {
         return res.status(403).json({ message: "Account is blocked" });
+      }
+
+      if (!user.isApproved) {
+        return res.status(403).json({ message: "Account is pending admin approval" });
       }
 
       // Generate OTP for login
@@ -142,6 +148,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
+      if (!user.isApproved) {
+        return res.status(403).json({ message: "Account is pending admin approval" });
+      }
+
       await storage.markOtpAsUsed(otp.id);
 
       res.json({ 
@@ -152,7 +162,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           name: user.name,
           email: user.email,
           userType: user.userType,
-          isVerified: user.isVerified
+          isVerified: user.isVerified,
+          isApproved: user.isApproved
         }
       });
     } catch (error) {
@@ -583,6 +594,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ users });
     } catch (error) {
       console.error("Get users error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get pending users for approval
+  app.get("/api/admin/users/pending", async (req, res) => {
+    try {
+      const pendingUsers = await storage.getPendingUsers();
+      res.json({ users: pendingUsers });
+    } catch (error) {
+      console.error("Get pending users error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Approve user
+  app.post("/api/admin/users/:userId/approve", async (req, res) => {
+    try {
+      const { adminId } = req.body;
+      await storage.approveUser(req.params.userId);
+      
+      if (adminId) {
+        await storage.createAdminActionLog(adminId, "Approved user", req.params.userId, 'user', 'User account approved');
+        // Send approval notification
+        await storage.sendNotification(
+          req.params.userId,
+          "Account Approved",
+          "Your account has been approved! You can now access all features.",
+          "approval"
+        );
+      }
+      
+      res.json({ message: "User approved successfully" });
+    } catch (error) {
+      console.error("Approve user error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Reject user
+  app.post("/api/admin/users/:userId/reject", async (req, res) => {
+    try {
+      const { adminId, reason } = req.body;
+      await storage.rejectUser(req.params.userId);
+      
+      if (adminId) {
+        await storage.createAdminActionLog(adminId, "Rejected user", req.params.userId, 'user', reason || 'User registration rejected');
+        // Send rejection notification
+        await storage.sendNotification(
+          req.params.userId,
+          "Account Rejected",
+          `Your account registration has been rejected. ${reason || 'Please contact support for more information.'}`,
+          "rejection"
+        );
+      }
+      
+      res.json({ message: "User rejected successfully" });
+    } catch (error) {
+      console.error("Reject user error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

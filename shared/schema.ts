@@ -21,8 +21,10 @@ export const users = pgTable("users", {
   password: text("password"), // Optional password
   userType: userTypeEnum("user_type").notNull(),
   isVerified: boolean("is_verified").default(false),
+  isApproved: boolean("is_approved").default(false), // Admin approval required
   isBlocked: boolean("is_blocked").default(false),
   profileCompleted: boolean("profile_completed").default(false), // Track if profile is completed
+  approvedAt: timestamp("approved_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

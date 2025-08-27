@@ -49,6 +49,9 @@ export interface IStorage {
   getUserByPhone(phoneNumber: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
+  getPendingUsers(): Promise<User[]>;
+  approveUser(userId: string): Promise<void>;
+  rejectUser(userId: string): Promise<void>;
   
   // Profile completion methods
   completeCustomerProfile(userId: string, profileData: any): Promise<User>;
@@ -508,6 +511,26 @@ export class DatabaseStorage implements IStorage {
 
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getPendingUsers(): Promise<User[]> {
+    return await db.select().from(users)
+      .where(and(eq(users.isVerified, true), eq(users.isApproved, false)))
+      .orderBy(desc(users.createdAt));
+  }
+
+  async approveUser(userId: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ isApproved: true, approvedAt: new Date() })
+      .where(eq(users.id, userId));
+  }
+
+  async rejectUser(userId: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ isApproved: false })
+      .where(eq(users.id, userId));
   }
 
   // Duplicate method removed - getAllJobs already exists in MemStorage above

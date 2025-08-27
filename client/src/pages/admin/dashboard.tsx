@@ -42,6 +42,11 @@ export default function AdminDashboard() {
     enabled: !!user.id,
   });
 
+  const { data: pendingUsersData } = useQuery({
+    queryKey: ["/api/admin/users/pending"],
+    enabled: !!user.id,
+  });
+
   // Mock chart data (in production, this would come from API)
   const jobsPerDayData = [
     { date: "Mon", jobs: 12 },
@@ -77,6 +82,7 @@ export default function AdminDashboard() {
   });
 
   const pendingProviders: ProviderProfile[] = (pendingData as any)?.providers || [];
+  const pendingUsers = pendingUsersData?.users || [];
   
   // Enhanced dashboard stats
   const stats = (dashboardData as any)?.stats || {
@@ -84,7 +90,7 @@ export default function AdminDashboard() {
     activeProviders: 89,
     totalJobs: 156,
     monthlyRevenue: 45000,
-    pendingApprovals: pendingProviders.length,
+    pendingApprovals: pendingProviders.length + pendingUsers.length,
     approvedToday: 3,
     rejectedToday: 1
   };
@@ -131,6 +137,48 @@ export default function AdminDashboard() {
     },
   });
 
+  const approveUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await apiRequest("POST", `/api/admin/users/${userId}/approve`);
+      return response.json();
+    },
+    onSuccess: (data, userId) => {
+      toast({
+        title: "User Approved",
+        description: "The user has been approved and can now access the platform.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users/pending"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Approval Failed",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const rejectUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await apiRequest("POST", `/api/admin/users/${userId}/reject`);
+      return response.json();
+    },
+    onSuccess: (data, userId) => {
+      toast({
+        title: "User Rejected",
+        description: "The user registration has been rejected.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users/pending"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Rejection Failed",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const blockUserMutation = useMutation({
     mutationFn: async (userId: string) => {
       const response = await apiRequest("POST", `/api/admin/users/${userId}/block`);
@@ -158,6 +206,14 @@ export default function AdminDashboard() {
 
   const handleReject = (userId: string) => {
     rejectMutation.mutate(userId);
+  };
+
+  const handleApproveUser = (userId: string) => {
+    approveUserMutation.mutate(userId);
+  };
+
+  const handleRejectUser = (userId: string) => {
+    rejectUserMutation.mutate(userId);
   };
 
   const handleBlockUser = (userId: string) => {
@@ -251,7 +307,7 @@ export default function AdminDashboard() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4" data-testid="admin-tabs">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="pending">Approvals ({pendingProviders.length})</TabsTrigger>
+            <TabsTrigger value="pending">Approvals ({pendingProviders.length + pendingUsers.length})</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="jobs">Jobs</TabsTrigger>
             <TabsTrigger value="wallet">Wallet & Pricing</TabsTrigger>
@@ -349,17 +405,84 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="pending" data-testid="tab-content-pending">
-            <div className="space-y-4">
-              {pendingProviders.length === 0 ? (
+            <div className="space-y-6">
+              {/* Pending Users Section */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Users size={20} />
+                  Pending User Registrations ({pendingUsers.length})
+                </h3>
+                {pendingUsers.length === 0 ? (
+                  <Card data-testid="empty-pending-users">
+                    <CardContent className="text-center py-8">
+                      <UserCheck className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                      <p className="text-muted-foreground">No pending user registrations</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-3">
+                    {pendingUsers.map((user) => (
+                      <Card key={user.id} className="hover:shadow-md transition-shadow" data-testid={`card-user-${user.id}`}>
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-xs">
+                                  {user.userType === 'customer' ? 'Customer' : 'Provider'}
+                                </Badge>
+                                <span className="font-medium">{user.phoneNumber}</span>
+                              </div>
+                              {user.name && <p className="text-sm text-muted-foreground">{user.name}</p>}
+                              <p className="text-xs text-muted-foreground">
+                                Registered: {new Date(user.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => handleApproveUser(user.id)}
+                                disabled={approveUserMutation.isPending}
+                                data-testid={`button-approve-user-${user.id}`}
+                              >
+                                <CheckCircle size={16} className="mr-1" />
+                                Approve
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleRejectUser(user.id)}
+                                disabled={rejectUserMutation.isPending}
+                                data-testid={`button-reject-user-${user.id}`}
+                              >
+                                <XCircle size={16} className="mr-1" />
+                                Reject
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Pending Providers Section */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Briefcase size={20} />
+                  Pending Service Providers ({pendingProviders.length})
+                </h3>
+                {pendingProviders.length === 0 && pendingUsers.length === 0 ? (
                 <Card data-testid="empty-pending">
                   <CardContent className="text-center py-12">
                     <CheckCircle size={48} className="mx-auto mb-4 opacity-50 text-green-500" />
                     <h3 className="text-lg font-semibold">All caught up!</h3>
-                    <p className="text-muted-foreground">No pending provider applications to review</p>
+                    <p className="text-muted-foreground">No pending applications to review</p>
                   </CardContent>
                 </Card>
-              ) : (
-                pendingProviders.map((provider) => (
+                  ) : (
+                  <div className="space-y-3">
+                    {pendingProviders.map((provider) => (
                   <Card key={provider.id} className="hover:shadow-md transition-shadow" data-testid={`card-provider-${provider.id}`}>
                     <CardHeader>
                       <div className="flex items-start justify-between">
@@ -443,8 +566,10 @@ export default function AdminDashboard() {
                       </div>
                     </CardContent>
                   </Card>
-                ))
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </TabsContent>
 
