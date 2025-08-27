@@ -10,6 +10,13 @@ import {
   adminSettings,
   notifications,
   adminActionLogs,
+  reviews,
+  subscriptions,
+  referrals,
+  aiLogs,
+  enhancedNotifications,
+  seoPages,
+  whatsappLogs,
   type User, 
   type InsertUser,
   type OtpCode,
@@ -69,6 +76,9 @@ export interface IStorage {
   getJob(id: string): Promise<Job | undefined>;
   getJobsNearLocation(latitude: number, longitude: number, radiusKm: number): Promise<Job[]>;
   getCustomerJobs(customerId: string): Promise<Job[]>;
+  closeJob(jobId: string): Promise<void>;
+  reopenJob(jobId: string): Promise<void>;
+  hireAgain(originalJobId: string, newJobData: InsertJob): Promise<Job>;
   
   // Wallet methods
   createWallet(wallet: InsertWallet): Promise<Wallet>;
@@ -84,6 +94,7 @@ export interface IStorage {
   getJobUnlocks(jobId: string): Promise<JobUnlock[]>;
   hasProviderUnlockedJob(jobId: string, providerId: string): Promise<boolean>;
   incrementJobUnlockCount(jobId: string): Promise<void>;
+  getCustomerUnlockedJobs(customerId: string): Promise<any[]>;
   
   // Admin methods
   getDashboardStats(): Promise<any>;
@@ -97,6 +108,22 @@ export interface IStorage {
   getGlobalSettings(): Promise<any[]>;
   sendNotification(userId: string, title: string, message: string, type: string): Promise<void>;
   getAllNotifications(userId?: string): Promise<any[]>;
+  
+  // Phase 4 methods
+  createReview(reviewData: any): Promise<any>;
+  getJobReviews(jobId: string): Promise<any[]>;
+  getProviderReviews(providerId: string): Promise<any[]>;
+  updateProviderRating(providerId: string): Promise<void>;
+  createSubscription(subscriptionData: any): Promise<any>;
+  getActiveSubscription(userId: string): Promise<any>;
+  createReferral(referralData: any): Promise<any>;
+  getReferralByCode(code: string): Promise<any>;
+  logAiAction(logData: any): Promise<void>;
+  createWhatsappLog(logData: any): Promise<void>;
+  getSeoPage(slug: string): Promise<any>;
+  createSeoPage(pageData: any): Promise<any>;
+  detectDuplicateJob(jobData: any): Promise<any[]>;
+  autoDetectCategory(description: string): Promise<string>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -387,6 +414,44 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  // Enhanced Job Methods
+  async closeJob(jobId: string): Promise<void> {
+    await db.update(jobs).set({ status: 'closed' }).where(eq(jobs.id, jobId));
+  }
+
+  async reopenJob(jobId: string): Promise<void> {
+    await db.update(jobs).set({ status: 'open' }).where(eq(jobs.id, jobId));
+  }
+
+  async hireAgain(originalJobId: string, newJobData: InsertJob): Promise<Job> {
+    const [job] = await db.insert(jobs).values(newJobData).returning();
+    return job;
+  }
+
+  async getCustomerUnlockedJobs(customerId: string): Promise<any[]> {
+    const unlocked = await db
+      .select({
+        id: jobUnlocks.id,
+        jobId: jobUnlocks.jobId,
+        providerId: jobUnlocks.providerId,
+        providerName: users.name,
+        providerPhone: users.phoneNumber,
+        providerRating: providerProfiles.rating,
+        unlockedAt: jobUnlocks.createdAt,
+      })
+      .from(jobUnlocks)
+      .innerJoin(jobs, eq(jobUnlocks.jobId, jobs.id))
+      .innerJoin(users, eq(jobUnlocks.providerId, users.id))
+      .leftJoin(providerProfiles, eq(users.id, providerProfiles.userId))
+      .where(eq(jobs.customerId, customerId))
+      .orderBy(desc(jobUnlocks.createdAt));
+
+    return unlocked.map(unlock => ({
+      ...unlock,
+      whatsappLink: `https://wa.me/${unlock.providerPhone?.replace('+', '')}?text=Hi, I saw your profile on ServiceConnect and would like to discuss the job.`
+    }));
+  }
+
   // Admin methods
   async getDashboardStats(): Promise<any> {
     const totalUsers = await db.select({ count: sql<number>`count(*)` }).from(users);
@@ -487,6 +552,153 @@ export class DatabaseStorage implements IStorage {
     }
     
     return await query.orderBy(desc(notifications.createdAt)).limit(50);
+  }
+
+  // Phase 4 Implementation
+  async createReview(reviewData: any): Promise<any> {
+    const [review] = await db.insert(reviews).values(reviewData).returning();
+    
+    // Update provider rating
+    await this.updateProviderRating(reviewData.providerId);
+    
+    return review;
+  }
+
+  async getJobReviews(jobId: string): Promise<any[]> {
+    return await db
+      .select({
+        id: reviews.id,
+        rating: reviews.rating,
+        comment: reviews.comment,
+        customerName: users.name,
+        createdAt: reviews.createdAt,
+      })
+      .from(reviews)
+      .innerJoin(users, eq(reviews.customerId, users.id))
+      .where(eq(reviews.jobId, jobId));
+  }
+
+  async getProviderReviews(providerId: string): Promise<any[]> {
+    return await db
+      .select({
+        id: reviews.id,
+        rating: reviews.rating,
+        comment: reviews.comment,
+        customerName: users.name,
+        createdAt: reviews.createdAt,
+      })
+      .from(reviews)
+      .innerJoin(users, eq(reviews.customerId, users.id))
+      .where(eq(reviews.providerId, providerId));
+  }
+
+  async updateProviderRating(providerId: string): Promise<void> {
+    const avgRating = await db
+      .select({ avg: sql<number>`avg(cast(rating as decimal))` })
+      .from(reviews)
+      .where(eq(reviews.providerId, providerId));
+
+    if (avgRating[0]?.avg) {
+      await db
+        .update(providerProfiles)
+        .set({ rating: avgRating[0].avg.toString() })
+        .where(eq(providerProfiles.userId, providerId));
+    }
+  }
+
+  async createSubscription(subscriptionData: any): Promise<any> {
+    const [subscription] = await db.insert(subscriptions).values(subscriptionData).returning();
+    return subscription;
+  }
+
+  async getActiveSubscription(userId: string): Promise<any> {
+    const [subscription] = await db
+      .select()
+      .from(subscriptions)
+      .where(and(
+        eq(subscriptions.userId, userId),
+        eq(subscriptions.status, 'active')
+      ))
+      .orderBy(desc(subscriptions.createdAt));
+    
+    return subscription;
+  }
+
+  async createReferral(referralData: any): Promise<any> {
+    const [referral] = await db.insert(referrals).values(referralData).returning();
+    return referral;
+  }
+
+  async getReferralByCode(code: string): Promise<any> {
+    const [referral] = await db
+      .select()
+      .from(referrals)
+      .where(eq(referrals.referralCode, code));
+    
+    return referral;
+  }
+
+  async logAiAction(logData: any): Promise<void> {
+    await db.insert(aiLogs).values(logData);
+  }
+
+  async createWhatsappLog(logData: any): Promise<void> {
+    await db.insert(whatsappLogs).values(logData);
+  }
+
+  async getSeoPage(slug: string): Promise<any> {
+    const [page] = await db
+      .select()
+      .from(seoPages)
+      .where(and(eq(seoPages.slug, slug), eq(seoPages.isActive, true)));
+    
+    return page;
+  }
+
+  async createSeoPage(pageData: any): Promise<any> {
+    const [page] = await db.insert(seoPages).values(pageData).returning();
+    return page;
+  }
+
+  async detectDuplicateJob(jobData: any): Promise<any[]> {
+    // Simple duplicate detection based on title and location similarity
+    const duplicates = await db
+      .select()
+      .from(jobs)
+      .where(and(
+        eq(jobs.customerId, jobData.customerId),
+        eq(jobs.category, jobData.category),
+        eq(jobs.status, 'open')
+      ))
+      .limit(5);
+
+    return duplicates.filter(job => 
+      job.title.toLowerCase().includes(jobData.title.toLowerCase().substring(0, 10)) ||
+      job.location.toLowerCase().includes(jobData.location.toLowerCase().substring(0, 10))
+    );
+  }
+
+  async autoDetectCategory(description: string): Promise<string> {
+    // Simple category detection based on keywords
+    const text = description.toLowerCase();
+    
+    if (text.includes('clean') || text.includes('maid') || text.includes('house')) {
+      return 'Home Cleaning';
+    }
+    if (text.includes('plumb') || text.includes('pipe') || text.includes('leak')) {
+      return 'Plumbing';
+    }
+    if (text.includes('electric') || text.includes('wire') || text.includes('power')) {
+      return 'Electrical';
+    }
+    if (text.includes('beauty') || text.includes('makeup') || text.includes('hair')) {
+      return 'Beauty & Personal Care';
+    }
+    if (text.includes('repair') || text.includes('fix') || text.includes('maintenance')) {
+      return 'Home Repairs';
+    }
+    
+    return 'General Services';
   }
 }
 

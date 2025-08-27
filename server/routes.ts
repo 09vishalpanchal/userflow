@@ -681,6 +681,214 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Phase 4: Enhanced Job Management Routes
+  app.post("/api/jobs/:jobId/close", async (req, res) => {
+    try {
+      await storage.closeJob(req.params.jobId);
+      res.json({ message: "Job closed successfully" });
+    } catch (error) {
+      console.error("Close job error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/jobs/:jobId/reopen", async (req, res) => {
+    try {
+      await storage.reopenJob(req.params.jobId);
+      res.json({ message: "Job reopened successfully" });
+    } catch (error) {
+      console.error("Reopen job error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/jobs/hire-again", async (req, res) => {
+    try {
+      const { originalJobId, ...newJobData } = req.body;
+      
+      // Auto-detect category if not provided or vague
+      if (!newJobData.category || newJobData.category === 'General Services') {
+        const detectedCategory = await storage.autoDetectCategory(newJobData.description);
+        newJobData.category = detectedCategory;
+        
+        // Log AI action
+        await storage.logAiAction({
+          jobId: null,
+          type: 'category_detection',
+          originalData: newJobData.description,
+          processedData: detectedCategory,
+          confidence: '0.85',
+          action: 'category_suggested'
+        });
+      }
+      
+      // Check for duplicate jobs
+      const duplicates = await storage.detectDuplicateJob(newJobData);
+      if (duplicates.length > 0) {
+        await storage.logAiAction({
+          jobId: null,
+          type: 'duplicate_detection',
+          originalData: JSON.stringify(newJobData),
+          processedData: `Found ${duplicates.length} similar jobs`,
+          confidence: '0.75',
+          action: 'duplicate_flagged'
+        });
+        
+        return res.status(409).json({
+          message: "Similar job detected",
+          duplicates: duplicates.slice(0, 3),
+          suggestion: "You have similar active jobs. Consider updating existing ones instead."
+        });
+      }
+      
+      const newJob = await storage.hireAgain(originalJobId, newJobData);
+      res.json({ message: "Job reposted successfully", job: newJob });
+    } catch (error) {
+      console.error("Hire again error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/jobs/unlocked/:customerId", async (req, res) => {
+    try {
+      const unlockedJobs = await storage.getCustomerUnlockedJobs(req.params.customerId);
+      res.json({ unlockedJobs });
+    } catch (error) {
+      console.error("Get unlocked jobs error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Phase 4: Reviews & Rating System
+  app.post("/api/reviews", async (req, res) => {
+    try {
+      const reviewData = {
+        ...req.body,
+        createdAt: new Date(),
+      };
+      
+      const review = await storage.createReview(reviewData);
+      res.json({ message: "Review submitted successfully", review });
+    } catch (error) {
+      console.error("Create review error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/reviews/job/:jobId", async (req, res) => {
+    try {
+      const reviews = await storage.getJobReviews(req.params.jobId);
+      res.json({ reviews });
+    } catch (error) {
+      console.error("Get job reviews error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/reviews/provider/:providerId", async (req, res) => {
+    try {
+      const reviews = await storage.getProviderReviews(req.params.providerId);
+      res.json({ reviews });
+    } catch (error) {
+      console.error("Get provider reviews error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Phase 4: WhatsApp Integration
+  app.post("/api/whatsapp/log", async (req, res) => {
+    try {
+      await storage.createWhatsappLog(req.body);
+      res.json({ message: "WhatsApp interaction logged" });
+    } catch (error) {
+      console.error("WhatsApp log error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Phase 4: Subscription Plans
+  app.post("/api/subscriptions", async (req, res) => {
+    try {
+      const subscription = await storage.createSubscription(req.body);
+      res.json({ message: "Subscription created successfully", subscription });
+    } catch (error) {
+      console.error("Create subscription error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/subscriptions/:userId", async (req, res) => {
+    try {
+      const subscription = await storage.getActiveSubscription(req.params.userId);
+      res.json({ subscription });
+    } catch (error) {
+      console.error("Get subscription error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Phase 4: Referral System
+  app.post("/api/referrals", async (req, res) => {
+    try {
+      const referralData = {
+        ...req.body,
+        referralCode: `REF${Date.now()}${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
+        createdAt: new Date(),
+      };
+      
+      const referral = await storage.createReferral(referralData);
+      res.json({ message: "Referral created successfully", referral });
+    } catch (error) {
+      console.error("Create referral error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/referrals/:code", async (req, res) => {
+    try {
+      const referral = await storage.getReferralByCode(req.params.code);
+      if (!referral) {
+        return res.status(404).json({ message: "Referral code not found" });
+      }
+      res.json({ referral });
+    } catch (error) {
+      console.error("Get referral error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Phase 4: SEO Landing Pages
+  app.get("/api/seo/:slug", async (req, res) => {
+    try {
+      const page = await storage.getSeoPage(req.params.slug);
+      if (!page) {
+        return res.status(404).json({ message: "Page not found" });
+      }
+      
+      // Increment views
+      await storage.createSeoPage({
+        ...page,
+        views: page.views + 1,
+        lastUpdated: new Date()
+      });
+      
+      res.json({ page });
+    } catch (error) {
+      console.error("Get SEO page error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/seo/pages", async (req, res) => {
+    try {
+      const page = await storage.createSeoPage(req.body);
+      res.json({ message: "SEO page created successfully", page });
+    } catch (error) {
+      console.error("Create SEO page error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

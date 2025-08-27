@@ -6,7 +6,12 @@ import { z } from "zod";
 export const userTypeEnum = pgEnum('user_type', ['customer', 'provider', 'admin']);
 export const jobStatusEnum = pgEnum('job_status', ['open', 'closed']);
 export const providerStatusEnum = pgEnum('provider_status', ['pending', 'approved', 'rejected']);
-export const transactionTypeEnum = pgEnum('transaction_type', ['recharge', 'unlock']);
+export const transactionTypeEnum = pgEnum('transaction_type', ['recharge', 'unlock', 'refund', 'subscription']);
+export const reviewRatingEnum = pgEnum('review_rating', ['1', '2', '3', '4', '5']);
+export const subscriptionStatusEnum = pgEnum('subscription_status', ['active', 'expired', 'cancelled']);
+export const subscriptionTypeEnum = pgEnum('subscription_type', ['basic', 'premium', 'enterprise']);
+export const aiLogTypeEnum = pgEnum('ai_log_type', ['category_detection', 'duplicate_detection', 'auto_close']);
+export const notificationTypeEnum = pgEnum('notification_type', ['approval', 'rejection', 'unlock', 'review', 'system', 'promotional']);
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -131,6 +136,112 @@ export const adminActionLogs = pgTable("admin_action_logs", {
   targetId: varchar("target_id"), // user id, job id, etc
   targetType: text("target_type"), // user, job, wallet, etc
   details: text("details"), // additional context as JSON string
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Phase 4: Reviews and Ratings
+export const reviews = pgTable("reviews", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  jobId: varchar("job_id").notNull().references(() => jobs.id),
+  customerId: varchar("customer_id").notNull().references(() => users.id),
+  providerId: varchar("provider_id").notNull().references(() => users.id),
+  rating: reviewRatingEnum("rating").notNull(),
+  comment: text("comment"),
+  isHelpful: boolean("is_helpful").default(true), // For filtering fake reviews
+  isVerified: boolean("is_verified").default(false), // Admin verification
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Phase 4: Subscription Plans
+export const subscriptions = pgTable("subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  type: subscriptionTypeEnum("type").notNull(),
+  status: subscriptionStatusEnum("status").default('active'),
+  monthlyUnlocks: integer("monthly_unlocks").notNull(), // Number of free unlocks per month
+  priorityJobs: boolean("priority_jobs").default(false), // Show jobs first
+  startDate: timestamp("start_date").defaultNow(),
+  endDate: timestamp("end_date").notNull(),
+  autoRenew: boolean("auto_renew").default(true),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Phase 4: Referral System
+export const referrals = pgTable("referrals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  referrerId: varchar("referrer_id").notNull().references(() => users.id),
+  refereeId: varchar("referee_id").notNull().references(() => users.id),
+  referralCode: varchar("referral_code", { length: 20 }).notNull().unique(),
+  creditsEarned: decimal("credits_earned", { precision: 10, scale: 2 }).default('0'),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Phase 4: AI Automation Logs
+export const aiLogs = pgTable("ai_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  jobId: varchar("job_id").references(() => jobs.id),
+  type: aiLogTypeEnum("type").notNull(),
+  originalData: text("original_data"), // Original job title/description
+  processedData: text("processed_data"), // AI processed version
+  confidence: decimal("confidence", { precision: 3, scale: 2 }), // AI confidence score
+  action: text("action"), // Action taken (e.g., 'category_changed', 'job_flagged')
+  details: text("details"), // Additional details
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Phase 4: Enhanced Notifications
+export const enhancedNotifications = pgTable("enhanced_notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  type: notificationTypeEnum("type").notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  actionUrl: text("action_url"), // Deep link or action URL
+  isRead: boolean("is_read").default(false),
+  priority: integer("priority").default(1), // 1=low, 2=medium, 3=high
+  metadata: text("metadata"), // JSON metadata for complex notifications
+  expiresAt: timestamp("expires_at"), // Auto-expire promotional notifications
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Phase 4: SEO Landing Pages
+export const seoPages = pgTable("seo_pages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  slug: varchar("slug", { length: 200 }).notNull().unique(), // e.g., "plumbers-in-delhi"
+  city: text("city").notNull(),
+  category: text("category").notNull(),
+  title: text("title").notNull(), // SEO title
+  description: text("description").notNull(), // SEO description
+  content: text("content").notNull(), // AI generated content
+  isActive: boolean("is_active").default(true),
+  views: integer("views").default(0),
+  lastUpdated: timestamp("last_updated").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Phase 4: Subscription Usage Tracking
+export const subscriptionUsage = pgTable("subscription_usage", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  subscriptionId: varchar("subscription_id").notNull().references(() => subscriptions.id),
+  month: integer("month").notNull(), // 1-12
+  year: integer("year").notNull(),
+  unlocksUsed: integer("unlocks_used").default(0),
+  unlocksLimit: integer("unlocks_limit").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Phase 4: WhatsApp Integration
+export const whatsappLogs = pgTable("whatsapp_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  jobId: varchar("job_id").notNull().references(() => jobs.id),
+  customerId: varchar("customer_id").notNull().references(() => users.id),
+  providerId: varchar("provider_id").notNull().references(() => users.id),
+  phoneNumber: varchar("phone_number", { length: 20 }).notNull(),
+  message: text("message").notNull(),
+  clicked: boolean("clicked").default(false),
+  clickedAt: timestamp("clicked_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -297,6 +408,34 @@ export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type AdminActionLog = typeof adminActionLogs.$inferSelect;
 export type InsertAdminActionLog = z.infer<typeof insertAdminActionLogSchema>;
+
+// Phase 4 Types
+export type Review = typeof reviews.$inferSelect;
+export type InsertReview = typeof reviews.$inferInsert;
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = typeof subscriptions.$inferInsert;
+export type Referral = typeof referrals.$inferSelect;
+export type InsertReferral = typeof referrals.$inferInsert;
+export type AiLog = typeof aiLogs.$inferSelect;
+export type InsertAiLog = typeof aiLogs.$inferInsert;
+export type EnhancedNotification = typeof enhancedNotifications.$inferSelect;
+export type InsertEnhancedNotification = typeof enhancedNotifications.$inferInsert;
+export type SeoPage = typeof seoPages.$inferSelect;
+export type InsertSeoPage = typeof seoPages.$inferInsert;
+export type SubscriptionUsage = typeof subscriptionUsage.$inferSelect;
+export type InsertSubscriptionUsage = typeof subscriptionUsage.$inferInsert;
+export type WhatsappLog = typeof whatsappLogs.$inferSelect;
+export type InsertWhatsappLog = typeof whatsappLogs.$inferInsert;
+
+// Phase 4 Schemas
+export const insertReviewSchema = createInsertSchema(reviews);
+export const insertSubscriptionSchema = createInsertSchema(subscriptions);
+export const insertReferralSchema = createInsertSchema(referrals);
+export const insertAiLogSchema = createInsertSchema(aiLogs);
+export const insertEnhancedNotificationSchema = createInsertSchema(enhancedNotifications);
+export const insertSeoPageSchema = createInsertSchema(seoPages);
+export const insertSubscriptionUsageSchema = createInsertSchema(subscriptionUsage);
+export const insertWhatsappLogSchema = createInsertSchema(whatsappLogs);
 
 // Profile completion schemas
 export const customerProfileCompletionSchema = z.object({

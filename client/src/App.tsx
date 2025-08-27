@@ -12,6 +12,7 @@ import CustomerDashboard from "@/pages/customer/dashboard";
 import CustomerDashboardProfile from "@/pages/customer/profile";
 import PostJob from "@/pages/customer/post-job";
 import ProviderDashboard from "@/pages/provider/dashboard";
+import EnhancedProviderDashboard from "@/pages/provider/enhanced-dashboard";
 import ProviderDashboardProfile from "@/pages/provider/profile";
 import ProviderWallet from "@/pages/provider/wallet";
 import AdminDashboard from "@/pages/admin/dashboard";
@@ -76,6 +77,7 @@ function Router() {
         
         {/* Provider Routes */}
         <Route path="/provider/dashboard" component={ProviderDashboard} />
+        <Route path="/provider/enhanced-dashboard" component={EnhancedProviderDashboard} />
         <Route path="/provider/profile" component={ProviderDashboardProfile} />
         <Route path="/provider/wallet" component={ProviderWallet} />
         
