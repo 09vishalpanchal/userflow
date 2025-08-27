@@ -605,7 +605,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/users", async (req, res) => {
     try {
       const users = await storage.getAllUsers();
-      res.json({ users });
+      
+      // Fetch wallet information for providers
+      const usersWithWallets = await Promise.all(
+        users.map(async (user) => {
+          if (user.userType === 'provider') {
+            const wallet = await storage.getWallet(user.id);
+            return {
+              ...user,
+              walletBalance: wallet?.balance || '0.00'
+            };
+          }
+          return user;
+        })
+      );
+      
+      res.json({ users: usersWithWallets });
     } catch (error) {
       console.error("Get users error:", error);
       res.status(500).json({ message: "Internal server error" });
@@ -1242,6 +1257,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Get jobs list error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Admin Wallet Management
+  app.get("/api/admin/wallets/total", async (req, res) => {
+    try {
+      const totalWallets = await storage.getAllWallets();
+      const totalBalance = totalWallets.reduce((sum, wallet) => sum + parseFloat(wallet.balance || '0'), 0);
+      
+      res.json({
+        totalBalance: totalBalance.toFixed(2),
+        walletCount: totalWallets.length,
+        wallets: totalWallets.map(wallet => ({
+          id: wallet.id,
+          providerId: wallet.providerId,
+          balance: parseFloat(wallet.balance || '0').toFixed(2),
+          lastRechargeAt: wallet.lastRechargeAt
+        }))
+      });
+    } catch (error) {
+      console.error("Get total wallets error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

@@ -42,6 +42,15 @@ export default function AdminSidebarDashboard() {
     },
   });
 
+  // Total wallets query
+  const { data: walletsData } = useQuery({
+    queryKey: ['/api/admin/wallets/total'],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/admin/wallets/total");
+      return response.json();
+    },
+  });
+
   // Pending providers query
   const { data: pendingProviders, isLoading: providersLoading } = useQuery({
     queryKey: ['/api/admin/providers/pending'],
@@ -192,6 +201,19 @@ export default function AdminSidebarDashboard() {
               <div className="text-2xl font-bold">
                 {(pendingProviders?.providers?.length || 0) + (pendingUsers?.users?.length || 0)}
               </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Total Wallet Balance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                ₹{walletsData?.totalBalance || "0.00"}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Across {walletsData?.walletCount || 0} wallets
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -376,6 +398,210 @@ export default function AdminSidebarDashboard() {
     </div>
   );
 
+  // All users query
+  const { data: allUsersData } = useQuery({
+    queryKey: ['/api/admin/users'],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/admin/users");
+      return response.json();
+    },
+  });
+
+  // Add balance modal state
+  const [addBalanceModal, setAddBalanceModal] = useState({
+    isOpen: false,
+    providerId: '',
+    currentBalance: 0,
+    amount: ''
+  });
+
+  const addBalanceMutation = useMutation({
+    mutationFn: async ({ providerId, amount }: { providerId: string, amount: number }) => {
+      const response = await apiRequest("POST", "/api/admin/wallet/add-balance", {
+        providerId,
+        amount,
+        adminId: "admin-1" // This would come from auth context
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Balance Added Successfully",
+        description: `₹${addBalanceModal.amount} has been added to provider wallet`,
+      });
+      setAddBalanceModal({ isOpen: false, providerId: '', currentBalance: 0, amount: '' });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/wallets/total'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add balance",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleAddBalance = (providerId: string, currentBalance: number) => {
+    setAddBalanceModal({
+      isOpen: true,
+      providerId,
+      currentBalance,
+      amount: ''
+    });
+  };
+
+  const submitAddBalance = () => {
+    const amount = parseFloat(addBalanceModal.amount);
+    if (!amount || amount <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid amount",
+        variant: "destructive",
+      });
+      return;
+    }
+    addBalanceMutation.mutate({ providerId: addBalanceModal.providerId, amount });
+  };
+
+  const renderUsers = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">User Management</h2>
+      
+      <div className="grid gap-4">
+        {allUsersData?.users?.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-8">
+              <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Users Found</h3>
+              <p className="text-gray-600">There are currently no users in the system.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          allUsersData?.users?.map((user: any) => (
+            <Card key={user.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <Badge variant={user.userType === 'provider' ? 'default' : 'secondary'}>
+                        {user.userType}
+                      </Badge>
+                      <span className="font-medium">{user.name || user.phoneNumber}</span>
+                      {user.userType === 'provider' && (
+                        <Badge variant="outline" className="text-green-600">
+                          <Wallet size={12} className="mr-1" />
+                          ₹{user.walletBalance || '0.00'}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Phone: {user.phoneNumber} | Joined: {new Date(user.createdAt).toLocaleDateString()}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={user.isApproved ? 'default' : 'destructive'}>
+                        {user.isApproved ? 'Approved' : 'Pending'}
+                      </Badge>
+                      <Badge variant={user.isBlocked ? 'destructive' : 'default'}>
+                        {user.isBlocked ? 'Blocked' : 'Active'}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {user.userType === 'provider' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleAddBalance(user.id, parseFloat(user.walletBalance || '0'))}
+                        className="text-green-600 hover:text-green-700"
+                      >
+                        <Plus size={14} className="mr-1" />
+                        Add Balance
+                      </Button>
+                    )}
+                    <Button size="sm" variant="outline">
+                      <Eye size={14} className="mr-1" />
+                      View
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+    </div>
+  );
+
+  const renderProviders = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">Provider Management</h2>
+      
+      <div className="grid gap-4">
+        {allUsersData?.users?.filter((user: any) => user.userType === 'provider').length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-8">
+              <Briefcase className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Providers Found</h3>
+              <p className="text-gray-600">There are currently no providers in the system.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          allUsersData?.users?.filter((user: any) => user.userType === 'provider').map((provider: any) => (
+            <Card key={provider.id} className="hover:shadow-md transition-shadow">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-lg">{provider.businessName || provider.name || provider.phoneNumber}</CardTitle>
+                    <CardDescription>
+                      {provider.serviceCategories?.join(", ") || "No categories set"}
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-green-600">
+                      <Wallet size={12} className="mr-1" />
+                      ₹{provider.walletBalance || '0.00'}
+                    </Badge>
+                    <Badge variant={provider.isApproved ? 'default' : 'destructive'}>
+                      {provider.isApproved ? 'Approved' : 'Pending'}
+                    </Badge>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    {provider.businessDetails || "No business details provided"}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-muted-foreground">
+                      Location: {provider.location || "Not specified"} | 
+                      Rating: {provider.rating ? `${provider.rating}⭐` : "No ratings"}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleAddBalance(provider.id, parseFloat(provider.walletBalance || '0'))}
+                        className="text-green-600 hover:text-green-700"
+                      >
+                        <Plus size={14} className="mr-1" />
+                        Add Balance
+                      </Button>
+                      <Button size="sm" variant="outline">
+                        <Eye size={14} className="mr-1" />
+                        View Profile
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+    </div>
+  );
+
   const renderContent = () => {
     switch (selectedTab) {
       case "overview":
@@ -383,27 +609,10 @@ export default function AdminSidebarDashboard() {
       case "approvals":
         return renderApprovals();
       case "users":
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold">User Management</h2>
-            <Card>
-              <CardContent className="text-center py-8">
-                <p className="text-muted-foreground">User management features coming soon</p>
-              </CardContent>
-            </Card>
-          </div>
-        );
+        return renderUsers();
       case "providers":
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Provider Management</h2>
-            <Card>
-              <CardContent className="text-center py-8">
-                <p className="text-muted-foreground">Provider management features coming soon</p>
-              </CardContent>
-            </Card>
-          </div>
-        );
+        return renderProviders();
+      // Handled above with providers case
       case "jobs":
         return (
           <div className="space-y-6">
@@ -539,6 +748,73 @@ export default function AdminSidebarDashboard() {
           )}
         </div>
       </div>
+
+      {/* Add Balance Modal */}
+      <Dialog open={addBalanceModal.isOpen} onOpenChange={(open) => 
+        setAddBalanceModal(prev => ({ ...prev, isOpen: open }))
+      }>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Wallet size={20} />
+              Add Balance to Provider Wallet
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-2">Current Balance</p>
+              <div className="flex items-center justify-center gap-1 text-xl font-bold text-green-600">
+                <IndianRupee size={18} />
+                <span>{addBalanceModal.currentBalance.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="admin-amount">Amount to Add</Label>
+              <div className="relative mt-1">
+                <IndianRupee size={16} className="absolute left-3 top-3 text-gray-400" />
+                <Input
+                  id="admin-amount"
+                  type="number"
+                  placeholder="Enter amount"
+                  value={addBalanceModal.amount}
+                  onChange={(e) => setAddBalanceModal(prev => ({ ...prev, amount: e.target.value }))}
+                  className="pl-10"
+                  min="1"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setAddBalanceModal({ isOpen: false, providerId: '', currentBalance: 0, amount: '' })}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={submitAddBalance}
+                disabled={addBalanceMutation.isPending}
+                className="flex-1"
+              >
+                {addBalanceMutation.isPending ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Adding...
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Plus size={16} />
+                    Add Balance
+                  </div>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

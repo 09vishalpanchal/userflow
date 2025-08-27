@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { MapPin, Clock, Wallet, Eye, Phone, User, AlertCircle, CheckCircle, Settings } from "lucide-react";
+import { MapPin, Clock, Wallet, Eye, Phone, User, AlertCircle, CheckCircle, Settings, Plus, IndianRupee } from "lucide-react";
+import { AddBalanceModal } from "@/components/wallet/add-balance-modal";
 
 interface Job {
   id: string;
@@ -33,6 +34,7 @@ export default function ProviderDashboard() {
   const [, setLocation] = useLocation();
   const [user] = useState({ id: "provider-1", name: "John Service Provider" }); // This would come from auth context
   const [radius, setRadius] = useState(5);
+  const [showAddBalanceModal, setShowAddBalanceModal] = useState(false);
   const { toast } = useToast();
 
   // Get provider profile
@@ -188,12 +190,29 @@ export default function ProviderDashboard() {
 
         {/* Stats Cards */}
         <div className="grid md:grid-cols-4 gap-6 mb-8" data-testid="stats-cards">
-          <Card data-testid="card-wallet-balance">
+          <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200" data-testid="card-wallet-balance">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Wallet Balance</CardTitle>
+              <CardTitle className="text-sm font-medium text-green-700 flex items-center gap-2">
+                <Wallet size={16} />
+                Wallet Balance
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600" data-testid="text-balance">₹{balance.toFixed(2)}</div>
+            <CardContent className="space-y-3">
+              <div className="flex items-center gap-2">
+                <IndianRupee size={20} className="text-green-600" />
+                <span className="text-2xl font-bold text-green-600" data-testid="text-balance">
+                  {balance.toFixed(2)}
+                </span>
+              </div>
+              <Button 
+                size="sm" 
+                onClick={() => setShowAddBalanceModal(true)}
+                className="w-full bg-green-600 hover:bg-green-700"
+                data-testid="add-balance-card"
+              >
+                <Plus size={14} className="mr-1" />
+                Add Balance
+              </Button>
             </CardContent>
           </Card>
           
@@ -353,6 +372,14 @@ export default function ProviderDashboard() {
           </TabsContent>
         </Tabs>
       </div>
+      
+      {/* Add Balance Modal */}
+      <AddBalanceModal
+        isOpen={showAddBalanceModal}
+        onClose={() => setShowAddBalanceModal(false)}
+        providerId={user.id}
+        currentBalance={balance}
+      />
     </div>
   );
 }
