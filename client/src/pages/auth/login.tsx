@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { authUtils } from "@/lib/auth";
 import { ArrowLeft } from "lucide-react";
 
 const phoneSchema = z.object({
@@ -87,6 +88,9 @@ export default function Login() {
       return response.json();
     },
     onSuccess: (data) => {
+      // Save user to localStorage
+      authUtils.saveUser(data.user);
+      
       toast({
         title: "Login Successful",
         description: "Welcome back!",

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Navbar } from "@/components/navbar";
 import { HeroSection } from "@/components/hero-section";
@@ -14,11 +14,22 @@ import { MobileAppSection } from "@/components/mobile-app-section";
 import { Footer } from "@/components/footer";
 import { MobileAppLayout } from "@/components/layout/mobile-app-layout";
 import UnifiedAuthModal from "@/components/auth/unified-auth-modal";
+import { authUtils, type User } from "@/lib/auth";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Home() {
   const [, setLocation] = useLocation();
-  const [user, setUser] = useState<any>(null); // In a real app, this would come from auth context
+  const [user, setUser] = useState<User | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const { toast } = useToast();
+
+  // Check for existing authentication on component mount
+  useEffect(() => {
+    const existingUser = authUtils.getUser();
+    if (existingUser) {
+      setUser(existingUser);
+    }
+  }, []);
 
   const handleSignIn = () => {
     setShowAuthModal(true);
@@ -37,8 +48,12 @@ export default function Home() {
   };
 
   const handleSignOut = () => {
+    authUtils.removeUser();
     setUser(null);
-    // Clear auth state
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
   };
 
   return (

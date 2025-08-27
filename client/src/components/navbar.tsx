@@ -74,9 +74,12 @@ export function Navbar({ user, onSignIn, onGetStarted, onSignOut }: NavbarProps)
           <div className="flex items-center space-x-3">
             {user ? (
               <>
+                <span className="text-sm text-gray-600">
+                  Welcome, {user.name || user.phoneNumber}
+                </span>
                 <Link href={getDashboardLink()} data-testid="link-dashboard">
                   <Button variant="ghost" size="sm">
-                    {user.name || "Dashboard"}
+                    Dashboard
                   </Button>
                 </Link>
                 <Button 
@@ -85,21 +88,19 @@ export function Navbar({ user, onSignIn, onGetStarted, onSignOut }: NavbarProps)
                   onClick={onSignOut}
                   data-testid="button-sign-out"
                 >
-                  Sign Out
+                  Logout
                 </Button>
               </>
             ) : (
               <>
                 <Button 
                   variant="ghost" 
-                  size="sm" 
                   onClick={onSignIn}
                   data-testid="button-sign-in"
                 >
                   Sign In
                 </Button>
                 <Button 
-                  size="sm" 
                   onClick={onGetStarted}
                   data-testid="button-get-started"
                 >
