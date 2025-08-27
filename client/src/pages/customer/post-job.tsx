@@ -198,7 +198,7 @@ export default function PostJob() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {serviceCategories.map((category) => (
+                            {serviceCategories.map((category: string) => (
                               <SelectItem key={category} value={category} data-testid={`option-${category.toLowerCase().replace(/\s+/g, '-')}`}>
                                 {category}
                               </SelectItem>

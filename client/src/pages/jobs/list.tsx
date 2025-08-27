@@ -34,7 +34,7 @@ export default function JobsList() {
   
   const [filters, setFilters] = useState<FilterState>({
     search: urlParams.get('search') || '',
-    location: urlParams.get('location') || '',
+    location: urlParams.get('location') || 'all',
     categories: urlParams.getAll('category'),
     budgetRange: urlParams.get('minBudget') && urlParams.get('maxBudget') 
       ? [parseInt(urlParams.get('minBudget')!), parseInt(urlParams.get('maxBudget')!)]
@@ -102,7 +102,7 @@ export default function JobsList() {
   const clearFilters = () => {
     const cleared = {
       search: '',
-      location: '',
+      location: 'all',
       categories: [],
       budgetRange: [0, 50000],
       urgency: 'all',
@@ -169,7 +169,7 @@ export default function JobsList() {
             <SelectValue placeholder="Select location" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Locations</SelectItem>
+            <SelectItem value="all">All Locations</SelectItem>
             {locations.map((loc) => (
               <SelectItem key={loc} value={loc}>{loc}</SelectItem>
             ))}

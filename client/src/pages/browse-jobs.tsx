@@ -25,17 +25,17 @@ interface Job {
 // Categories will be fetched dynamically
 
 const cities = [
-  "All Cities",
-  "Mumbai",
-  "Delhi", 
-  "Bangalore",
-  "Hyderabad",
-  "Chennai",
-  "Kolkata",
-  "Pune",
-  "Ahmedabad",
-  "Jaipur",
-  "Surat"
+  { value: "all", label: "All Cities" },
+  { value: "Mumbai", label: "Mumbai" },
+  { value: "Delhi", label: "Delhi" }, 
+  { value: "Bangalore", label: "Bangalore" },
+  { value: "Hyderabad", label: "Hyderabad" },
+  { value: "Chennai", label: "Chennai" },
+  { value: "Kolkata", label: "Kolkata" },
+  { value: "Pune", label: "Pune" },
+  { value: "Ahmedabad", label: "Ahmedabad" },
+  { value: "Jaipur", label: "Jaipur" },
+  { value: "Surat", label: "Surat" }
 ];
 
 export default function BrowseJobs() {
@@ -43,8 +43,8 @@ export default function BrowseJobs() {
   const [user] = useState<any>(null); // Would come from auth context
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [filters, setFilters] = useState({
-    category: "All Categories",
-    city: "All Cities",
+    category: "all",
+    city: "all",
     radius: 10,
     search: ""
   });
@@ -59,7 +59,7 @@ export default function BrowseJobs() {
     enabled: true,
   });
 
-  const serviceCategories = ["All Categories", ...((categoriesData as any)?.categories || [])];
+  const serviceCategories = [{ value: "all", label: "All Categories" }, ...((categoriesData as any)?.categories?.map((cat: string) => ({ value: cat, label: cat })) || [])];
   const jobs: Job[] = (jobsData as any)?.jobs || [];
 
   const JobCard = ({ job }: { job: Job }) => (
@@ -183,7 +183,7 @@ export default function BrowseJobs() {
           </SelectTrigger>
           <SelectContent>
             {serviceCategories.map(category => (
-              <SelectItem key={category} value={category}>{category}</SelectItem>
+              <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -197,7 +197,7 @@ export default function BrowseJobs() {
           </SelectTrigger>
           <SelectContent>
             {cities.map(city => (
-              <SelectItem key={city} value={city}>{city}</SelectItem>
+              <SelectItem key={city.value} value={city.value}>{city.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
