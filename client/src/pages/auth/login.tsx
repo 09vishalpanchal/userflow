@@ -57,11 +57,12 @@ export default function Login() {
         description: "Please check your phone for the verification code.",
       });
       
-      // In development, show the OTP code
+      // In development, show and auto-fill the OTP code
       if (data.code) {
+        otpForm.setValue("code", data.code);
         toast({
           title: "Development Mode",
-          description: `Your OTP code is: ${data.code}`,
+          description: `Your OTP code is: ${data.code} (Auto-filled)`,
           variant: "default",
         });
       }
