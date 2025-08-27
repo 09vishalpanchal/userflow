@@ -61,7 +61,7 @@ export default function AdminSidebarDashboard() {
   });
 
   // Pending users query
-  const { data: pendingUsers, isLoading: usersLoading } = useQuery({
+  const { data: pendingUsers, isLoading: pendingUsersLoading } = useQuery({
     queryKey: ['/api/admin/users/pending'],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/admin/users/pending");
@@ -346,7 +346,7 @@ export default function AdminSidebarDashboard() {
         </TabsContent>
 
         <TabsContent value="users" className="space-y-4">
-          {usersLoading ? (
+          {pendingUsersLoading ? (
             <div>Loading...</div>
           ) : pendingUsers?.users?.length > 0 ? (
             <div className="grid gap-4">
