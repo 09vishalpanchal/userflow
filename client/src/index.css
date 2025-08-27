@@ -207,34 +207,60 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 
-  /* Force black text for all buttons and inputs */
-  button, 
-  input, 
-  textarea, 
-  select,
+  /* Force black text for all buttons and inputs - exclude admin panel */
+  body:not([data-admin]) button, 
+  body:not([data-admin]) input, 
+  body:not([data-admin]) textarea, 
+  body:not([data-admin]) select,
   .PhoneInputInput,
   .PhoneInputCountrySelect {
     color: white !important;
     background-color: black !important;
   }
+  
+  /* Exclude admin routes from black styling */
+  [data-testid*="admin"] button,
+  [data-testid*="admin"] input,
+  [data-testid*="admin"] textarea,
+  [data-testid*="admin"] select {
+    color: inherit !important;
+    background-color: inherit !important;
+  }
 
-  /* Force black text for placeholders */
-  input::placeholder,
-  textarea::placeholder,
+  /* Force black text for placeholders - exclude admin */
+  body:not([data-admin]) input::placeholder,
+  body:not([data-admin]) textarea::placeholder,
   .PhoneInputInput::placeholder {
     color: black !important;
     opacity: 0.7;
   }
+  
+  /* Exclude admin from black placeholder styling */
+  [data-testid*="admin"] input::placeholder,
+  [data-testid*="admin"] textarea::placeholder {
+    color: inherit !important;
+    opacity: inherit !important;
+  }
 
-  /* Force black text for button content */
-  button * {
+  /* Force black text for button content - exclude admin */
+  body:not([data-admin]) button * {
     color: white !important;
   }
   
-  /* Make buttons black background */
-  button {
+  /* Make buttons black background - exclude admin */
+  body:not([data-admin]) button {
     background-color: black !important;
     border-color: black !important;
+  }
+  
+  /* Exclude admin routes from black button styling */
+  [data-testid*="admin"] button * {
+    color: inherit !important;
+  }
+  
+  [data-testid*="admin"] button {
+    background-color: inherit !important;
+    border-color: inherit !important;
   }
 
   /* Force black text for form labels */
