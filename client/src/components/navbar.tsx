@@ -1,22 +1,23 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Menu, X, User, Settings, LogOut, BarChart3 } from "lucide-react";
 
 interface User {
   id: string;
   name?: string;
+  phoneNumber: string;
   userType: "customer" | "provider" | "admin";
 }
 
 interface NavbarProps {
   user?: User;
   onSignIn: () => void;
-  onGetStarted: () => void;
   onSignOut?: () => void;
 }
 
-export function Navbar({ user, onSignIn, onGetStarted, onSignOut }: NavbarProps) {
+export function Navbar({ user, onSignIn, onSignOut }: NavbarProps) {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -73,40 +74,41 @@ export function Navbar({ user, onSignIn, onGetStarted, onSignOut }: NavbarProps)
           {/* Auth Buttons */}
           <div className="flex items-center space-x-3">
             {user ? (
-              <>
-                <span className="text-sm text-gray-600">
-                  Welcome, {user.name || user.phoneNumber}
-                </span>
-                <Link href={getDashboardLink()} data-testid="link-dashboard">
-                  <Button variant="ghost" size="sm">
-                    Dashboard
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" data-testid="user-dropdown-trigger">
+                    <User size={16} className="mr-2" />
+                    {user.name || user.phoneNumber}
                   </Button>
-                </Link>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={onSignOut}
-                  data-testid="button-sign-out"
-                >
-                  Logout
-                </Button>
-              </>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem asChild>
+                    <Link href={getDashboardLink()} data-testid="link-dashboard" className="flex items-center">
+                      <BarChart3 size={16} className="mr-2" />
+                      Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/${user.userType}/profile`} data-testid="link-profile" className="flex items-center">
+                      <Settings size={16} className="mr-2" />
+                      Update Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={onSignOut} data-testid="button-logout" className="flex items-center">
+                    <LogOut size={16} className="mr-2" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
-              <>
-                <Button 
-                  variant="ghost" 
-                  onClick={onSignIn}
-                  data-testid="button-sign-in"
-                >
-                  Sign In
-                </Button>
-                <Button 
-                  onClick={onGetStarted}
-                  data-testid="button-get-started"
-                >
-                  Get Started
-                </Button>
-              </>
+              <Button 
+                variant="ghost" 
+                onClick={onSignIn}
+                data-testid="button-sign-in"
+              >
+                Sign In
+              </Button>
             )}
           </div>
 

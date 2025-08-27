@@ -147,13 +147,23 @@ export default function UnifiedAuthModal({ isOpen, onClose }: UnifiedAuthModalPr
 
         onClose();
         
-        // Redirect based on user type
-        if (data.user.userType === "customer") {
-          setLocation("/customer/dashboard");
-        } else if (data.user.userType === "provider") {
-          setLocation("/provider/dashboard");
-        } else if (data.user.userType === "admin") {
-          setLocation("/admin/dashboard");
+        // Check if user needs to complete profile
+        if (!data.user.name || !data.user.email) {
+          // User needs to complete profile
+          if (data.user.userType === "customer") {
+            setLocation(`/profile/customer?userId=${data.user.id}`);
+          } else if (data.user.userType === "provider") {
+            setLocation(`/profile/provider?userId=${data.user.id}`);
+          }
+        } else {
+          // Redirect to dashboard
+          if (data.user.userType === "customer") {
+            setLocation("/customer/dashboard");
+          } else if (data.user.userType === "provider") {
+            setLocation("/provider/dashboard");
+          } else if (data.user.userType === "admin") {
+            setLocation("/admin/dashboard");
+          }
         }
         
         // Refresh page to update auth state

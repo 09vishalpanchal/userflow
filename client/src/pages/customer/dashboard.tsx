@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { authUtils, type User } from "@/lib/auth";
+import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
 import { Plus, MapPin, Clock, CheckCircle, AlertCircle, Star, MessageSquare, RotateCcw, Eye, XCircle } from "lucide-react";
 
 interface Job {
@@ -42,25 +45,46 @@ interface UnlockedJob {
 
 export default function CustomerDashboard() {
   const [, setLocation] = useLocation();
-  const [user] = useState({ id: "user-1", name: "John Doe" }); // This would come from auth context
+  const [user, setUser] = useState<User | null>(null);
   const [reviewJobId, setReviewJobId] = useState<string | null>(null);
   const [rating, setRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Check authentication
+  useEffect(() => {
+    const existingUser = authUtils.getUser();
+    if (!existingUser) {
+      setLocation("/");
+      return;
+    }
+    setUser(existingUser);
+  }, [setLocation]);
+
+  const handleSignOut = () => {
+    authUtils.removeUser();
+    setUser(null);
+    setLocation("/");
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
+  };
+
   const { data: jobsData, isLoading } = useQuery({
-    queryKey: ["/api/jobs/customer", user.id],
-    enabled: !!user.id,
+    queryKey: ["/api/jobs/customer", user?.id],
+    enabled: !!user?.id,
   });
 
   const { data: unlockedData } = useQuery({
-    queryKey: ["/api/jobs/unlocked", user.id],
-    enabled: !!user.id,
+    queryKey: ["/api/jobs/unlocked", user?.id],
+    enabled: !!user?.id,
   });
 
-  const jobs: Job[] = jobsData?.jobs || [];
-  const unlockedJobs: UnlockedJob[] = unlockedData?.unlockedJobs || [];
+  const jobs: Job[] = (jobsData as any)?.jobs || [];
+  const unlockedJobs: UnlockedJob[] = (unlockedData as any)?.unlockedJobs || [];
   const activeJobs = jobs.filter(job => job.status === "open");
   const completedJobs = jobs.filter(job => job.status === "closed");
 
@@ -71,7 +95,7 @@ export default function CustomerDashboard() {
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/jobs/customer", user.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs/customer", user?.id] });
       toast({ title: "Job closed successfully" });
     },
     onError: () => {
@@ -85,7 +109,7 @@ export default function CustomerDashboard() {
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/jobs/customer", user.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs/customer", user?.id] });
       toast({ title: "Job reopened successfully" });
     },
     onError: () => {
@@ -102,12 +126,12 @@ export default function CustomerDashboard() {
         description: job.description,
         location: job.location,
         budget: job.budget,
-        customerId: user.id
+        customerId: user?.id
       });
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/jobs/customer", user.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs/customer", user?.id] });
       toast({ title: "Job reposted successfully!" });
     },
     onError: () => {
@@ -124,7 +148,7 @@ export default function CustomerDashboard() {
     }) => {
       const response = await apiRequest("POST", `/api/reviews`, {
         jobId,
-        customerId: user.id,
+        customerId: user?.id,
         providerId,
         rating,
         comment
@@ -132,7 +156,7 @@ export default function CustomerDashboard() {
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/jobs/customer", user.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs/customer", user?.id] });
       setReviewJobId(null);
       setRating(5);
       setReviewComment("");
@@ -168,13 +192,22 @@ export default function CustomerDashboard() {
     );
   }
 
+  if (!user) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-background" data-testid="customer-dashboard">
+      <Navbar 
+        user={user}
+        onSignIn={() => setShowAuthModal(true)}
+        onSignOut={handleSignOut}
+      />
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8" data-testid="dashboard-header">
           <div>
-            <h1 className="text-3xl font-bold" data-testid="text-welcome">Welcome back, {user.name}!</h1>
+            <h1 className="text-3xl font-bold" data-testid="text-welcome">Welcome back, {user?.name}!</h1>
             <p className="text-muted-foreground" data-testid="text-subtitle">Manage your service requests and find trusted providers</p>
           </div>
           <Button onClick={() => setLocation("/customer/post-job")} data-testid="button-post-job">
@@ -510,6 +543,7 @@ export default function CustomerDashboard() {
           </TabsContent>
         </Tabs>
       </div>
+      <Footer />
     </div>
   );
 }

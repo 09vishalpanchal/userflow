@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -10,7 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { MapPin, Clock, Wallet, Eye, Phone, User, AlertCircle, CheckCircle, Settings, Plus, IndianRupee } from "lucide-react";
+import { authUtils, type User } from "@/lib/auth";
+import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
+import { MapPin, Clock, Wallet, Eye, Phone, User as UserIcon, AlertCircle, CheckCircle, Settings, Plus, IndianRupee } from "lucide-react";
 import { AddBalanceModal } from "@/components/wallet/add-balance-modal";
 
 interface Job {
@@ -32,23 +35,43 @@ interface ProviderProfile {
 
 export default function ProviderDashboard() {
   const [, setLocation] = useLocation();
-  const [user] = useState({ id: "provider-1", name: "John Service Provider" }); // This would come from auth context
+  const [user, setUser] = useState<User | null>(null);
   const [radius, setRadius] = useState(5);
   const [showAddBalanceModal, setShowAddBalanceModal] = useState(false);
   const { toast } = useToast();
 
+  // Check authentication
+  useEffect(() => {
+    const existingUser = authUtils.getUser();
+    if (!existingUser) {
+      setLocation("/");
+      return;
+    }
+    setUser(existingUser);
+  }, [setLocation]);
+
+  const handleSignOut = () => {
+    authUtils.removeUser();
+    setUser(null);
+    setLocation("/");
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
+  };
+
   // Get provider profile
   const { data: profileData } = useQuery({
-    queryKey: ["/api/profiles/provider", user.id],
-    enabled: !!user.id,
+    queryKey: ["/api/profiles/provider", user?.id],
+    enabled: !!user?.id,
   });
 
   const profile: ProviderProfile = (profileData as any)?.profile || { status: "pending", serviceRadius: 5, maxServiceRadius: 20 };
 
   // Get wallet information
   const { data: walletData, isLoading: walletLoading } = useQuery({
-    queryKey: ["/api/wallet", user.id],
-    enabled: !!user.id && profile.status === "approved",
+    queryKey: ["/api/wallet", user?.id],
+    enabled: !!user?.id && profile.status === "approved",
   });
 
   // Get nearby jobs
@@ -65,7 +88,7 @@ export default function ProviderDashboard() {
   const unlockJobMutation = useMutation({
     mutationFn: async (jobId: string) => {
       const response = await apiRequest("POST", `/api/jobs/${jobId}/unlock`, {
-        providerId: user.id,
+        providerId: user?.id,
       });
       return response.json();
     },
@@ -75,7 +98,7 @@ export default function ProviderDashboard() {
         description: `Customer contact: ${data.customerContact.name} - ${data.customerContact.phoneNumber}`,
       });
       // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ["/api/wallet", user.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/wallet", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/jobs/near"] });
     },
     onError: (error: any) => {
@@ -100,9 +123,18 @@ export default function ProviderDashboard() {
     unlockJobMutation.mutate(jobId);
   };
 
+  if (!user) {
+    return null;
+  }
+
   if (profile.status === "pending") {
     return (
       <div className="min-h-screen bg-background" data-testid="pending-approval">
+        <Navbar 
+          user={user}
+          onSignIn={() => {}}
+          onSignOut={handleSignOut}
+        />
         <div className="container mx-auto px-4 py-8">
           <Card className="max-w-2xl mx-auto text-center">
             <CardHeader>
@@ -133,6 +165,7 @@ export default function ProviderDashboard() {
             </CardContent>
           </Card>
         </div>
+        <Footer />
       </div>
     );
   }
@@ -140,6 +173,11 @@ export default function ProviderDashboard() {
   if (profile.status === "rejected") {
     return (
       <div className="min-h-screen bg-background" data-testid="rejected-state">
+        <Navbar 
+          user={user}
+          onSignIn={() => {}}
+          onSignOut={handleSignOut}
+        />
         <div className="container mx-auto px-4 py-8">
           <Card className="max-w-2xl mx-auto text-center">
             <CardHeader>
@@ -159,17 +197,23 @@ export default function ProviderDashboard() {
             </CardContent>
           </Card>
         </div>
+        <Footer />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background" data-testid="provider-dashboard">
+      <Navbar 
+        user={user}
+        onSignIn={() => {}}
+        onSignOut={handleSignOut}
+      />
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8" data-testid="dashboard-header">
           <div>
-            <h1 className="text-3xl font-bold" data-testid="text-welcome">Welcome, {user.name}!</h1>
+            <h1 className="text-3xl font-bold" data-testid="text-welcome">Welcome, {user?.name}!</h1>
             <p className="text-muted-foreground" data-testid="text-subtitle">Find jobs and manage your service business</p>
           </div>
           <div className="flex items-center gap-4">
@@ -377,9 +421,11 @@ export default function ProviderDashboard() {
       <AddBalanceModal
         isOpen={showAddBalanceModal}
         onClose={() => setShowAddBalanceModal(false)}
-        providerId={user.id}
+        providerId={user?.id}
         currentBalance={balance}
       />
+      
+      <Footer />
     </div>
   );
 }

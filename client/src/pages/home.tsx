@@ -35,17 +35,7 @@ export default function Home() {
     setShowAuthModal(true);
   };
 
-  const handleGetStarted = () => {
-    setShowAuthModal(true);
-  };
 
-  const handleCustomerSignup = () => {
-    setShowAuthModal(true);
-  };
-
-  const handleProviderSignup = () => {
-    setShowAuthModal(true);
-  };
 
   const handleSignOut = () => {
     authUtils.removeUser();
@@ -61,16 +51,15 @@ export default function Home() {
       {/* Desktop Layout */}
       <div className="hidden lg:block min-h-screen bg-background">
         <Navbar 
-          user={user}
+          user={user || undefined}
           onSignIn={handleSignIn}
-          onGetStarted={handleGetStarted}
           onSignOut={handleSignOut}
         />
         
         <main>
           <HeroSection 
-            onCustomerSignup={handleCustomerSignup}
-            onProviderSignup={handleProviderSignup}
+            onCustomerSignup={handleSignIn}
+            onProviderSignup={handleSignIn}
           />
           <ServiceCategories />
           <NewNoteworthy />
@@ -90,8 +79,8 @@ export default function Home() {
         <MobileAppLayout user={user} onAuthRequired={handleSignIn}>
           <main>
             <HeroSection 
-              onCustomerSignup={handleCustomerSignup}
-              onProviderSignup={handleProviderSignup}
+              onCustomerSignup={handleSignIn}
+              onProviderSignup={handleSignIn}
             />
             <ServiceCategories />
             <NewNoteworthy />
