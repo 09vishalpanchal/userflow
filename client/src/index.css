@@ -214,7 +214,8 @@
   select,
   .PhoneInputInput,
   .PhoneInputCountrySelect {
-    color: black !important;
+    color: white !important;
+    background-color: black !important;
   }
 
   /* Force black text for placeholders */
@@ -227,7 +228,13 @@
 
   /* Force black text for button content */
   button * {
-    color: black !important;
+    color: white !important;
+  }
+  
+  /* Make buttons black background */
+  button {
+    background-color: black !important;
+    border-color: black !important;
   }
 
   /* Force black text for form labels */
