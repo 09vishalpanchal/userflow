@@ -83,37 +83,42 @@ const featuredServices: Service[] = [
 
 export function FeaturedServices() {
   return (
-    <section className="py-12 bg-gray-50" data-testid="featured-services-section">
+    <section className="py-20 bg-gradient-to-r from-purple-50 via-white to-pink-50" data-testid="featured-services-section">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2" data-testid="text-featured-title">
-            Most booked services
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center bg-purple-100 text-purple-800 px-4 py-2 rounded-full text-sm font-medium mb-6">
+            🔥 Trending Now
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4" data-testid="text-featured-title">
+            Most Booked Services
           </h2>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">Join thousands of satisfied customers who chose these popular services</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="featured-services-grid">
           {featuredServices.map((service) => (
             <Card 
               key={service.id} 
-              className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
+              className="overflow-hidden hover:shadow-2xl transition-all duration-500 cursor-pointer group transform hover:-translate-y-3 hover:scale-[1.02] bg-white border-0 shadow-md"
               data-testid={`service-${service.id}`}
             >
-              <div className="aspect-video bg-gradient-to-br from-primary/10 to-primary/5 relative">
+              <div className="aspect-video bg-gradient-to-br from-blue-500 to-purple-600 relative group-hover:from-purple-600 group-hover:to-pink-500 transition-all duration-500">
                 {service.discount && (
                   <Badge className="absolute top-2 left-2 bg-red-500 hover:bg-red-600">
                     {service.discount}
                   </Badge>
                 )}
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-md">
-                    <div className="w-8 h-8 bg-primary/20 rounded"></div>
+                  <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg group-hover:rotate-12 transition-transform duration-300"></div>
                   </div>
                 </div>
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300"></div>
               </div>
               
-              <CardContent className="p-4">
+              <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-semibold text-gray-900 group-hover:text-primary transition-colors line-clamp-1">
+                  <h3 className="font-bold text-lg text-gray-900 group-hover:text-purple-600 transition-colors duration-300 line-clamp-1">
                     {service.title}
                   </h3>
                   <div className="flex items-center gap-1 ml-2">

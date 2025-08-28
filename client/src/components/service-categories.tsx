@@ -47,8 +47,13 @@ export function ServiceCategories() {
   const categories = (categoriesData as any)?.categories || [];
 
   return (
-    <section className="py-8 bg-white" data-testid="service-categories-section">
+    <section className="py-16 bg-gradient-to-br from-blue-50 to-indigo-50" data-testid="service-categories-section">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Our Services</h2>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">Professional services for all your home and personal needs</p>
+        </div>
         
         {/* Categories Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4" data-testid="categories-grid">
@@ -59,13 +64,13 @@ export function ServiceCategories() {
             return (
               <div 
                 key={categoryId}
-                className="flex flex-col items-center p-4 rounded-xl hover:shadow-md transition-shadow cursor-pointer group"
+                className="flex flex-col items-center p-6 rounded-2xl bg-white shadow-sm hover:shadow-2xl transition-all duration-300 cursor-pointer group transform hover:-translate-y-2 hover:scale-105 border border-gray-100"
                 data-testid={`category-${categoryId}`}
               >
-                <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-3 group-hover:bg-primary/10 transition-colors">
-                  <IconComponent className="w-7 h-7 text-gray-600 group-hover:text-primary" />
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center mb-4 group-hover:from-blue-500 group-hover:to-indigo-600 transition-all duration-300 group-hover:rotate-6">
+                  <IconComponent className="w-8 h-8 text-blue-600 group-hover:text-white transition-colors duration-300" />
                 </div>
-                <span className="text-sm font-medium text-gray-800 text-center leading-tight">
+                <span className="text-sm font-semibold text-gray-800 text-center leading-tight group-hover:text-blue-600 transition-colors duration-300">
                   {category}
                 </span>
               </div>
