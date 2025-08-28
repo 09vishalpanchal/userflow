@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ServiceConnect - Connect with Local Service Providers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                borderRadius: {
+                    lg: "var(--radius)",
+                    md: "calc(var(--radius) - 2px)",
+                    sm: "calc(var(--radius) - 4px)",
+                },
+                colors: {
+                    background: "var(--background)",
+                    foreground: "var(--foreground)",
+                    card: {
+                        DEFAULT: "var(--card)",
+                        foreground: "var(--card-foreground)",
+                    },
+                    popover: {
+                        DEFAULT: "var(--popover)",
+                        foreground: "var(--popover-foreground)",
+                    },
+                    primary: {
+                        DEFAULT: "var(--primary)",
+                        foreground: "var(--primary-foreground)",
+                    },
+                    secondary: {
+                        DEFAULT: "var(--secondary)",
+                        foreground: "var(--secondary-foreground)",
+                    },
+                    muted: {
+                        DEFAULT: "var(--muted)",
+                        foreground: "var(--muted-foreground)",
+                    },
+                    accent: {
+                        DEFAULT: "var(--accent)",
+                        foreground: "var(--accent-foreground)",
+                    },
+                    destructive: {
+                        DEFAULT: "var(--destructive)",
+                        foreground: "var(--destructive-foreground)",
+                    },
+                    border: "var(--border)",
+                    input: "var(--input)",
+                    ring: "var(--ring)",
+                },
+                fontFamily: {
+                    sans: ["Inter", "sans-serif"],
+                }
+            },
+        }
+    };
+    </script>
+    <style>
+        :root {
+            --background: hsl(210 40% 98%);
+            --foreground: hsl(210 20% 15%);
+            --card: hsl(0 0% 100%);
+            --card-foreground: hsl(210 20% 15%);
+            --popover: hsl(0 0% 100%);
+            --popover-foreground: hsl(210 20% 15%);
+            --primary: hsl(214 84% 42%);
+            --primary-foreground: hsl(0 0% 100%);
+            --secondary: hsl(195 88% 42%);
+            --secondary-foreground: hsl(0 0% 100%);
+            --muted: hsl(210 30% 96%);
+            --muted-foreground: hsl(210 20% 50%);
+            --accent: hsl(24 95% 53%);
+            --accent-foreground: hsl(0 0% 100%);
+            --destructive: hsl(0 75% 55%);
+            --destructive-foreground: hsl(0 0% 100%);
+            --border: hsl(210 30% 85%);
+            --input: hsl(210 30% 90%);
+            --ring: hsl(214 84% 42%);
+            --radius: 12px;
+        }
+        
+        .dark {
+            --background: hsl(222 12% 8%);
+            --foreground: hsl(210 20% 90%);
+            --card: hsl(222 12% 12%);
+            --card-foreground: hsl(210 20% 90%);
+            --primary: hsl(214 84% 52%);
+            --secondary: hsl(195 88% 52%);
+            --muted: hsl(222 12% 15%);
+            --muted-foreground: hsl(210 20% 70%);
+            --accent: hsl(24 95% 63%);
+            --border: hsl(222 12% 20%);
+            --input: hsl(222 12% 18%);
+        }
+
+        .hero-gradient {
+            background: linear-gradient(135deg, hsl(214 84% 42%) 0%, hsl(195 88% 42%) 100%);
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .service-category:hover {
+            background: hsl(214 84% 50%);
+            color: white;
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-background text-foreground antialiased">
+    <!-- @COMPONENT: Navigation -->
+    <nav class="bg-card shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-2xl font-bold text-primary">ServiceConnect</h1>
+                    </div>
+                </div>
+                
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#services" class="text-muted-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors">Services</a>
+                        <a href="#how-it-works" class="text-muted-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors">How It Works</a>
+                        <a href="#providers" class="text-muted-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors">Providers</a>
+                        <a href="#about" class="text-muted-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors">About</a>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-3">
+                    <button class="text-primary hover:text-primary/80 px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                        Sign In
+                    </button>
+                    <button class="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                        Get Started
+                    </button>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button class="text-muted-foreground hover:text-primary p-2">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <!-- @END_COMPONENT: Navigation -->
+
+    <!-- @COMPONENT: Hero Section -->
+    <section class="hero-gradient text-white py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h1 class="text-4xl md:text-6xl font-bold mb-6">
+                    Connect with Local 
+                    <span class="block">Service Providers</span>
+                </h1>
+                <p class="text-xl md:text-2xl mb-8 text-white/90 max-w-3xl mx-auto">
+                    Find trusted professionals for your home and business needs, or grow your service business by connecting with local customers.
+                </p>
+                
+                <!-- Dual CTA Section -->
+                <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mt-12">
+                    <!-- Customer CTA -->
+                    <div class="bg-white/10 backdrop-blur-md rounded-xl p-8 border border-white/20">
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-search text-2xl"></i>
+                            </div>
+                            <h3 class="text-2xl font-semibold mb-4">Looking for Services?</h3>
+                            <p class="text-white/80 mb-6">Find verified professionals for cleaning, repairs, beauty, and more.</p>
+                            <button class="w-full bg-white text-primary hover:bg-gray-100 font-semibold py-3 px-6 rounded-lg transition-colors" data-event="click:handleCustomerSignup">
+                                Find Services
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Provider CTA -->
+                    <div class="bg-white/10 backdrop-blur-md rounded-xl p-8 border border-white/20">
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-briefcase text-2xl"></i>
+                            </div>
+                            <h3 class="text-2xl font-semibold mb-4">Offer Services?</h3>
+                            <p class="text-white/80 mb-6">Join our platform and connect with customers in your area.</p>
+                            <button class="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold py-3 px-6 rounded-lg transition-colors" data-event="click:handleProviderSignup">
+                                Start Earning
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: Hero Section -->
+
+    <!-- @COMPONENT: Service Categories -->
+    <section id="services" class="py-20 bg-muted/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">Popular Service Categories</h2>
+                <p class="text-lg text-muted-foreground max-w-2xl mx-auto">
+                    Discover thousands of trusted professionals ready to help with your needs
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                <!-- @MAP: serviceCategories.map(category => ( -->
+                <div class="service-category bg-card hover:bg-primary group rounded-xl p-6 text-center cursor-pointer transition-all duration-300 card-hover">
+                    <div class="w-12 h-12 mx-auto mb-4 text-primary group-hover:text-white text-2xl flex items-center justify-center">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <h3 class="font-semibold text-card-foreground group-hover:text-white">Home Cleaning</h3>
+                </div>
+
+                <div class="service-category bg-card hover:bg-primary group rounded-xl p-6 text-center cursor-pointer transition-all duration-300 card-hover">
+                    <div class="w-12 h-12 mx-auto mb-4 text-primary group-hover:text-white text-2xl flex items-center justify-center">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <h3 class="font-semibold text-card-foreground group-hover:text-white">Repairs</h3>
+                </div>
+
+                <div class="service-category bg-card hover:bg-primary group rounded-xl p-6 text-center cursor-pointer transition-all duration-300 card-hover">
+                    <div class="w-12 h-12 mx-auto mb-4 text-primary group-hover:text-white text-2xl flex items-center justify-center">
+                        <i class="fas fa-cut"></i>
+                    </div>
+                    <h3 class="font-semibold text-card-foreground group-hover:text-white">Beauty & Spa</h3>
+                </div>
+
+                <div class="service-category bg-card hover:bg-primary group rounded-xl p-6 text-center cursor-pointer transition-all duration-300 card-hover">
+                    <div class="w-12 h-12 mx-auto mb-4 text-primary group-hover:text-white text-2xl flex items-center justify-center">
+                        <i class="fas fa-car"></i>
+                    </div>
+                    <h3 class="font-semibold text-card-foreground group-hover:text-white">Auto Services</h3>
+                </div>
+
+                <div class="service-category bg-card hover:bg-primary group rounded-xl p-6 text-center cursor-pointer transition-all duration-300 card-hover">
+                    <div class="w-12 h-12 mx-auto mb-4 text-primary group-hover:text-white text-2xl flex items-center justify-center">
+                        <i class="fas fa-laptop"></i>
+                    </div>
+                    <h3 class="font-semibold text-card-foreground group-hover:text-white">Tech Support</h3>
+                </div>
+
+                <div class="service-category bg-card hover:bg-primary group rounded-xl p-6 text-center cursor-pointer transition-all duration-300 card-hover">
+                    <div class="w-12 h-12 mx-auto mb-4 text-primary group-hover:text-white text-2xl flex items-center justify-center">
+                        <i class="fas fa-paint-brush"></i>
+                    </div>
+                    <h3 class="font-semibold text-card-foreground group-hover:text-white">Painting</h3>
+                </div>
+                <!-- @END_MAP )) -->
+            </div>
+
+            <div class="text-center mt-12">
+                <button class="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-lg font-semibold transition-colors">
+                    View All Categories
+                </button>
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: Service Categories -->
+
+    <!-- @COMPONENT: How It Works -->
+    <section id="how-it-works" class="py-20 bg-background">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
+                <p class="text-lg text-muted-foreground">Simple steps to connect with the right professionals</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-16">
+                <!-- For Customers -->
+                <div>
+                    <h3 class="text-2xl font-bold mb-8 text-center">For Customers</h3>
+                    <div class="space-y-8">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <div class="w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold">1</div>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-lg font-semibold mb-2">Register with Phone</h4>
+                                <p class="text-muted-foreground">Sign up using your phone number and verify with OTP for secure access.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <div class="w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold">2</div>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-lg font-semibold mb-2">Complete Your Profile</h4>
+                                <p class="text-muted-foreground">Add your name, email, and location for personalized service recommendations.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <div class="w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold">3</div>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-lg font-semibold mb-2">Book Services</h4>
+                                <p class="text-muted-foreground">Browse and book verified service providers in your area with transparent pricing.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <div class="w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold">4</div>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-lg font-semibold mb-2">Track & Review</h4>
+                                <p class="text-muted-foreground">Monitor your booking status and leave reviews to help other customers.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- For Service Providers -->
+                <div>
+                    <h3 class="text-2xl font-bold mb-8 text-center">For Service Providers</h3>
+                    <div class="space-y-8">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <div class="w-10 h-10 bg-secondary text-secondary-foreground rounded-full flex items-center justify-center font-bold">1</div>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-lg font-semibold mb-2">Register & Verify</h4>
+                                <p class="text-muted-foreground">Sign up with phone verification and submit business documents for approval.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <div class="w-10 h-10 bg-secondary text-secondary-foreground rounded-full flex items-center justify-center font-bold">2</div>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-lg font-semibold mb-2">Create Your Profile</h4>
+                                <p class="text-muted-foreground">Add business details, service areas, pricing, and showcase your expertise.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <div class="w-10 h-10 bg-secondary text-secondary-foreground rounded-full flex items-center justify-center font-bold">3</div>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-lg font-semibold mb-2">Receive Bookings</h4>
+                                <p class="text-muted-foreground">Get notified about new service requests and communicate with customers.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <div class="w-10 h-10 bg-secondary text-secondary-foreground rounded-full flex items-center justify-center font-bold">4</div>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-lg font-semibold mb-2">Grow Your Business</h4>
+                                <p class="text-muted-foreground">Build your reputation through reviews and expand your customer base.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: How It Works -->
+
+    <!-- @COMPONENT: Featured Providers -->
+    <section id="providers" class="py-20 bg-muted/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">Featured Service Providers</h2>
+                <p class="text-lg text-muted-foreground">Meet some of our top-rated professionals</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- @MAP: featuredProviders.map(provider => ( -->
+                <div class="bg-card rounded-xl overflow-hidden shadow-sm card-hover">
+                    <!-- Professional headshot of a cleaning service provider -->
+                    <img src="https://images.unsplash.com/photo-1607990281513-2c110a25bd8c?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=400&h=300" alt="Sarah Johnson - Professional Cleaning Service" class="w-full h-48 object-cover" />
+                    <div class="p-6">
+                        <div class="flex items-center mb-4">
+                            <div>
+                                <h3 class="font-semibold text-lg" data-bind="provider.name">Sarah Johnson</h3>
+                                <p class="text-muted-foreground" data-bind="provider.service">Professional Cleaning</p>
+                            </div>
+                            <div class="ml-auto">
+                                <div class="flex items-center">
+                                    <i class="fas fa-star text-yellow-400"></i>
+                                    <span class="ml-1 font-semibold" data-bind="provider.rating">4.9</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-muted-foreground text-sm mb-4" data-bind="provider.description">
+                            5+ years experience in residential and commercial cleaning. Eco-friendly products used.
+                        </p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-muted-foreground">
+                                <i class="fas fa-map-marker-alt mr-1"></i>
+                                <span data-bind="provider.location">Downtown Area</span>
+                            </span>
+                            <button class="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md text-sm font-medium transition-colors" data-event="click:viewProfile">
+                                View Profile
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl overflow-hidden shadow-sm card-hover">
+                    <!-- Professional electrician working on electrical panel -->
+                    <img src="https://images.unsplash.com/photo-1621905252507-b35492cc74b4?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=400&h=300" alt="Mike Rodriguez - Licensed Electrician" class="w-full h-48 object-cover" />
+                    <div class="p-6">
+                        <div class="flex items-center mb-4">
+                            <div>
+                                <h3 class="font-semibold text-lg">Mike Rodriguez</h3>
+                                <p class="text-muted-foreground">Licensed Electrician</p>
+                            </div>
+                            <div class="ml-auto">
+                                <div class="flex items-center">
+                                    <i class="fas fa-star text-yellow-400"></i>
+                                    <span class="ml-1 font-semibold">4.8</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-muted-foreground text-sm mb-4">
+                            Licensed electrician with 10+ years experience. Emergency repairs and installations.
+                        </p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-muted-foreground">
+                                <i class="fas fa-map-marker-alt mr-1"></i>
+                                North Side
+                            </span>
+                            <button class="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                                View Profile
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl overflow-hidden shadow-sm card-hover">
+                    <!-- Professional hair stylist in modern salon -->
+                    <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=400&h=300" alt="Emma Wilson - Hair Stylist" class="w-full h-48 object-cover" />
+                    <div class="p-6">
+                        <div class="flex items-center mb-4">
+                            <div>
+                                <h3 class="font-semibold text-lg">Emma Wilson</h3>
+                                <p class="text-muted-foreground">Hair Stylist</p>
+                            </div>
+                            <div class="ml-auto">
+                                <div class="flex items-center">
+                                    <i class="fas fa-star text-yellow-400"></i>
+                                    <span class="ml-1 font-semibold">5.0</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-muted-foreground text-sm mb-4">
+                            Expert in modern cuts, color, and styling. Mobile service available for special events.
+                        </p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-muted-foreground">
+                                <i class="fas fa-map-marker-alt mr-1"></i>
+                                Westside
+                            </span>
+                            <button class="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                                View Profile
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_MAP )) -->
+            </div>
+
+            <div class="text-center mt-12">
+                <button class="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-lg font-semibold transition-colors">
+                    View All Providers
+                </button>
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: Featured Providers -->
+
+    <!-- @COMPONENT: Customer Testimonials -->
+    <section class="py-20 bg-background">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">What Our Customers Say</h2>
+                <p class="text-lg text-muted-foreground">Real reviews from satisfied customers</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- @MAP: testimonials.map(testimonial => ( -->
+                <div class="bg-card rounded-xl p-8 shadow-sm card-hover">
+                    <div class="flex mb-4">
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                    </div>
+                    <p class="text-card-foreground mb-6" data-bind="testimonial.content">
+                        "Found an amazing house cleaner through ServiceConnect. The booking process was so easy and the service was exceptional. Highly recommend!"
+                    </p>
+                    <div class="flex items-center">
+                        <!-- Happy customer giving testimonial -->
+                        <img src="https://pixabay.com/get/g36e07b075cd978c45d5a93217f87fc8fa8ae3d9e3b5fb1d3595ce765c8ffb06e569cb53521a86184b075dcb6e9f1849878ecf08c53667f91f0f11c2eda9ecc04_1280.jpg" alt="Jessica Thompson - Customer" class="w-12 h-12 rounded-full mr-4" />
+                        <div>
+                            <h4 class="font-semibold" data-bind="testimonial.name">Jessica Thompson</h4>
+                            <p class="text-muted-foreground text-sm" data-bind="testimonial.location">Phoenix, AZ</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-8 shadow-sm card-hover">
+                    <div class="flex mb-4">
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                    </div>
+                    <p class="text-card-foreground mb-6">
+                        "As a service provider, this platform has helped me grow my plumbing business significantly. Great customer support!"
+                    </p>
+                    <div class="flex items-center">
+                        <!-- Professional plumber testimonial photo -->
+                        <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100" alt="David Chen - Service Provider" class="w-12 h-12 rounded-full mr-4" />
+                        <div>
+                            <h4 class="font-semibold">David Chen</h4>
+                            <p class="text-muted-foreground text-sm">Licensed Plumber</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-8 shadow-sm card-hover">
+                    <div class="flex mb-4">
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                    </div>
+                    <p class="text-card-foreground mb-6">
+                        "Love how easy it is to find reliable contractors. The review system gives me confidence in who I'm hiring."
+                    </p>
+                    <div class="flex items-center">
+                        <!-- Satisfied customer testimonial photo -->
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100" alt="Robert Martinez - Customer" class="w-12 h-12 rounded-full mr-4" />
+                        <div>
+                            <h4 class="font-semibold">Robert Martinez</h4>
+                            <p class="text-muted-foreground text-sm">Denver, CO</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_MAP )) -->
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: Customer Testimonials -->
+
+    <!-- @COMPONENT: Mobile App Promotion -->
+    <section class="py-20 bg-muted/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-primary rounded-2xl p-12 text-center text-white">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">Get Our Mobile App</h2>
+                <p class="text-xl mb-8 text-white/90">
+                    Book services on the go and manage your account from anywhere
+                </p>
+                
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <a href="#" class="inline-flex items-center bg-black hover:bg-gray-900 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                        <i class="fab fa-apple mr-3 text-2xl"></i>
+                        <div class="text-left">
+                            <div class="text-xs">Download on the</div>
+                            <div class="text-lg">App Store</div>
+                        </div>
+                    </a>
+                    
+                    <a href="#" class="inline-flex items-center bg-black hover:bg-gray-900 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                        <i class="fab fa-google-play mr-3 text-2xl"></i>
+                        <div class="text-left">
+                            <div class="text-xs">Get it on</div>
+                            <div class="text-lg">Google Play</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: Mobile App Promotion -->
+
+    <!-- @COMPONENT: Footer -->
+    <footer class="bg-card border-t">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-2xl font-bold text-primary mb-4">ServiceConnect</h3>
+                    <p class="text-muted-foreground mb-4">
+                        Connecting customers with trusted local service providers.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-muted-foreground hover:text-primary">
+                            <i class="fab fa-facebook text-xl"></i>
+                        </a>
+                        <a href="#" class="text-muted-foreground hover:text-primary">
+                            <i class="fab fa-twitter text-xl"></i>
+                        </a>
+                        <a href="#" class="text-muted-foreground hover:text-primary">
+                            <i class="fab fa-instagram text-xl"></i>
+                        </a>
+                        <a href="#" class="text-muted-foreground hover:text-primary">
+                            <i class="fab fa-linkedin text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold mb-4">For Customers</h4>
+                    <ul class="space-y-2 text-muted-foreground">
+                        <li><a href="#" class="hover:text-primary">Browse Services</a></li>
+                        <li><a href="#" class="hover:text-primary">Book Now</a></li>
+                        <li><a href="#" class="hover:text-primary">Track Orders</a></li>
+                        <li><a href="#" class="hover:text-primary">Customer Support</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold mb-4">For Providers</h4>
+                    <ul class="space-y-2 text-muted-foreground">
+                        <li><a href="#" class="hover:text-primary">Join as Provider</a></li>
+                        <li><a href="#" class="hover:text-primary">Provider Dashboard</a></li>
+                        <li><a href="#" class="hover:text-primary">Resources</a></li>
+                        <li><a href="#" class="hover:text-primary">Provider Support</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold mb-4">Company</h4>
+                    <ul class="space-y-2 text-muted-foreground">
+                        <li><a href="#" class="hover:text-primary">About Us</a></li>
+                        <li><a href="#" class="hover:text-primary">Careers</a></li>
+                        <li><a href="#" class="hover:text-primary">Press</a></li>
+                        <li><a href="#" class="hover:text-primary">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-border mt-12 pt-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <p class="text-muted-foreground text-sm">
+                        © 2024 ServiceConnect. All rights reserved.
+                    </p>
+                    <div class="flex space-x-6 text-sm text-muted-foreground mt-4 md:mt-0">
+                        <a href="#" class="hover:text-primary">Privacy Policy</a>
+                        <a href="#" class="hover:text-primary">Terms of Service</a>
+                        <a href="#" class="hover:text-primary">Cookie Policy</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- @END_COMPONENT: Footer -->
+
+    <script>
+        // Simple scroll animation
+        (function() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver(function(entries) {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('fade-in');
+                    }
+                });
+            }, observerOptions);
+
+            // Observe sections for animation
+            document.addEventListener('DOMContentLoaded', function() {
+                const sections = document.querySelectorAll('section');
+                sections.forEach(section => {
+                    observer.observe(section);
+                });
+            });
+
+            // TODO: Implement user registration/login logic
+            // TODO: Implement OTP verification system
+            // TODO: Implement geolocation for user location detection
+            // TODO: Implement service search and filtering
+            // TODO: Implement booking system
+            // TODO: Implement messaging between customers and providers
+            // TODO: Implement admin panel for user verification
+        })();
+    </script>
+</body>
+</html>
