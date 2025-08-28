@@ -207,15 +207,16 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 
-  /* Force black text for all buttons and inputs - exclude admin panel */
+  /* Better color combination for buttons and inputs - exclude admin panel */
   body:not([data-admin]) button, 
   body:not([data-admin]) input, 
   body:not([data-admin]) textarea, 
   body:not([data-admin]) select,
   .PhoneInputInput,
   .PhoneInputCountrySelect {
-    color: white !important;
-    background-color: black !important;
+    color: #1f2937 !important;
+    background-color: #f9fafb !important;
+    border: 1px solid #d1d5db !important;
   }
   
   /* Exclude admin routes from black styling */
@@ -227,12 +228,12 @@
     background-color: inherit !important;
   }
 
-  /* Force black text for placeholders - exclude admin */
+  /* Better placeholder colors - exclude admin */
   body:not([data-admin]) input::placeholder,
   body:not([data-admin]) textarea::placeholder,
   .PhoneInputInput::placeholder {
-    color: black !important;
-    opacity: 0.7;
+    color: #6b7280 !important;
+    opacity: 1;
   }
   
   /* Exclude admin from black placeholder styling */
@@ -242,15 +243,22 @@
     opacity: inherit !important;
   }
 
-  /* Force black text for button content - exclude admin */
+  /* Better button content colors - exclude admin */
   body:not([data-admin]) button * {
     color: white !important;
   }
   
-  /* Make buttons black background - exclude admin */
+  /* Better button styling - exclude admin */
   body:not([data-admin]) button {
-    background-color: black !important;
-    border-color: black !important;
+    background-color: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    transition: all 0.2s ease !important;
+  }
+  
+  body:not([data-admin]) button:hover {
+    background-color: #2563eb !important;
+    border-color: #2563eb !important;
+    transform: translateY(-1px) !important;
   }
   
   /* Exclude admin routes from black button styling */
@@ -263,8 +271,15 @@
     border-color: inherit !important;
   }
 
-  /* Force black text for form labels */
-  label {
-    color: black !important;
+  /* Better label colors - exclude admin */
+  body:not([data-admin]) label {
+    color: #374151 !important;
+    font-weight: 500 !important;
+  }
+  
+  /* Exclude admin from label styling */
+  [data-testid*="admin"] label {
+    color: inherit !important;
+    font-weight: inherit !important;
   }
 }
